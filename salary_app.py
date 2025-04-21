@@ -3,8 +3,16 @@ import pickle
 import pandas as pd
 
 # Load the trained regression model
-with open("/content/kaggle2022_model.pkl", "rb") as f: 
+with open("kaggle2022_model.pkl", "rb") as f:
+    model = pickle.load(f)  
 
+# Now continue with the rest of your app
+education_mapping = {
+    'HS': 0,
+    'BS': 1,
+    'MS': 2,
+    'PHD': 3
+}
 # Define the education mapping used in training
 education_mapping = {
     "I did not complete any formal education": 0,
