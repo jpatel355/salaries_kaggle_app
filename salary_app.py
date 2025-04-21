@@ -4,7 +4,6 @@ import pandas as pd
 
 # Load the trained regression model
 with open("/content/kaggle2022_model.pkl", "rb") as f: 
-    model = pickle.load(f)
 
 # Define the education mapping used in training
 education_mapping = {
