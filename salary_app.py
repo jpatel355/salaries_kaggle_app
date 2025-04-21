@@ -55,14 +55,14 @@ features = {
     "Codes_In_Python": int(codes_python),
     "Codes_In_SQL": int(codes_sql),
     "Codes_In_GO": int(codes_go),
+    # One-hot encoded country features (Canada is the reference, so all 0 if Canada)
     "Country_India": 0,
     "Country_US": 0,
     "Country_Spain": 0,
     "Country_Other": 0
 }
 
-# Handle one-hot encoding of Country
-if country != "Canada":  # Canada is reference (drop_first=True)
+if country != "Canada":
     features[f"Country_{country}"] = 1
 
 # Convert to DataFrame for prediction
