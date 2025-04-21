@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # Load the trained regression model
-with open("/content/kaggle2022_model.pkl", "rb") as f:  # Adjust path as needed
+with open("/content/kaggle2022_model.pkl", "rb") as f: 
     model = pickle.load(f)
 
 # Define the education mapping used in training
@@ -72,6 +72,6 @@ if st.button("💵 Predict Salary"):
 # Footer
 st.markdown("---")
 st.markdown(
-    "<small>📘 Built with ❤️ using Streamlit — by Your Team</small>",
+    "<small>📘 Built with ❤️ using Streamlit — by Jiya, Rhea, and Michael>",
     unsafe_allow_html=True
 )
