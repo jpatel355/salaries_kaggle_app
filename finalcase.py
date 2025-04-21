@@ -10,7 +10,7 @@ Original file is located at
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv('/content/kaggle_survey_2022_responses.csv')
+df = pd.read_csv('kaggle_survey_2022_responses.csv')
 df.head()
 
 df.shape
