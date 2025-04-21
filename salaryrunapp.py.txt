@@ -1,3 +1,0 @@
-
-streamlit run "c:\mldeploy\salaryfinal.py"
-
