@@ -7,14 +7,14 @@ from sklearn.model_selection import train_test_split
 def main():
     st.title("💰 Salary Prediction App 💰")
 
-    # Load the pickled model and column list
+    # Load the bundled model and columns from a single .pkl file
     try:
-     with open('salary_model.pkl', 'rb') as file:
-    model_bundle = pickle.load(file)
-    model = model_bundle["model"]
-    model_columns = model_bundle["columns"]
+        with open('kaggle2022_model (3).pkl', 'rb') as file:
+            model_bundle = pickle.load(file)
+            model = model_bundle["model"]
+            model_columns = model_bundle["columns"]
     except FileNotFoundError as e:
-        st.error(f"Error: {e}. Please ensure all necessary files are in the same directory.")
+        st.error(f"Error: {e}. Please ensure the file 'kaggle2022_model (3).pkl' is in the same directory.")
         return  
 
     # Load the dataset
@@ -46,7 +46,7 @@ def main():
     st.sidebar.header("Input Features ⚙️")
     age = st.sidebar.slider("Age 🎂", 18, 65, 30)
 
-    # Extract countries from model columns
+    # Extract available countries from model columns
     available_countries = [col.replace("Country_", "") for col in model_columns if col.startswith("Country_")]
     country = st.sidebar.selectbox("Country 🌍", sorted(available_countries))
     
