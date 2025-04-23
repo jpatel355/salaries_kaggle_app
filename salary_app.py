@@ -14,8 +14,9 @@ def main():
     # Create input widgets with a more organized layout
     st.sidebar.header("Input Features ⚙️")  # Added a sidebar header
 
+    # Use the pre-processed data to get country list.
     age = st.sidebar.slider("Age 🎂", 18, 65, 30)
-    country = st.sidebar.selectbox("Country 🌍", X['Country'].unique())
+    country = st.sidebar.selectbox("Country 🌍", X_train['Country'].unique()) # Change to X_train
     education = st.sidebar.selectbox("Education 🎓",  df['Education'].unique())
     codes_java = st.sidebar.checkbox("Codes in Java ☕")
     codes_python = st.sidebar.checkbox("Codes in Python 🐍")
@@ -49,3 +50,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
