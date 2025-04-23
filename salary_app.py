@@ -9,10 +9,10 @@ def main():
 
     # Load the pickled model and column list
     try:
-        with open('salary_model.pkl', 'rb') as model_file:
-            model = pickle.load(model_file)
-        with open('salary_model.pkl', 'rb') as cols_file:
-            model_columns = pickle.load(cols_file)
+     with open('salary_model.pkl', 'rb') as file:
+    model_bundle = pickle.load(file)
+    model = model_bundle["model"]
+    model_columns = model_bundle["columns"]
     except FileNotFoundError as e:
         st.error(f"Error: {e}. Please ensure all necessary files are in the same directory.")
         return  
