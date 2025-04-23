@@ -7,8 +7,13 @@ with open("kaggle2022_model (2).pkl", "rb") as f:
     model = pickle.load(f)
 
 # Display expected model features
-expected_features = list(model.feature_names_in_)
-st.sidebar.markdown("### 🔍 Model expects these features:")
+expected_features = [
+    "Age", 
+    "Country_India", "Country_Spain", "Country_US", "Country_Other",
+    "Student_Status",
+    "Codes_In_Python", "Codes_In_SQL", "Codes_In_JAVA", "Codes_In_GO",
+    "Years_Coding"
+]st.sidebar.markdown("### 🔍 Model expects these features:")
 st.sidebar.write(expected_features)
 
 # Title
