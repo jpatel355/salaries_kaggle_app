@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # Load the trained model
-with open("/content/kaggle2022_model.pkl", "rb") as f:
+with open("kaggle2022_model.pkl", "rb") as f:
     model = pickle.load(f)
 
 # App title and subtitle
