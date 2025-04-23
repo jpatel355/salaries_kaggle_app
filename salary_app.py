@@ -3,7 +3,7 @@ import pandas as pd
 import pickle
 
 # Load the model
-with open("kaggle2022_model(2).pkl", "rb") as f:
+with open("kaggle2022_model.pkl", "rb") as f:
     model = pickle.load(f)
 
 # Display expected model features
