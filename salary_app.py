@@ -48,7 +48,7 @@ def main():
 
     # Use the pre-processed data to get country list.
     age = st.sidebar.slider("Age 🎂", 18, 65, 30)
-    country = st.sidebar.selectbox("Country 🌍", X_train['Country'].unique()) # Changed to X_train
+    country = st.sidebar.selectbox("Country 🌍", df['Country'].dropna().unique())
     education = st.sidebar.selectbox("Education 🎓",  df['Education'].unique())
     codes_java = st.sidebar.checkbox("Codes in Java ☕")
     codes_python = st.sidebar.checkbox("Codes in Python 🐍")
