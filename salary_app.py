@@ -38,7 +38,9 @@ def user_input_features():
 # Main function to run the app
 def main():
     st.title("Student Status Prediction")
-    st.write("()
+    st.write("Predict whether a user is a student based on their input data.")
+    
+    input_df = user_input_features()
     
     # Preprocess the input data
     input_df = pd.get_dummies(input_df)
