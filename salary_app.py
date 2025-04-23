@@ -1,61 +1,58 @@
 import streamlit as st
-import pickle
 import pandas as pd
+import pickle
 
-# Load the trained model
-with open("kaggle2022_model (2).pkl", "rb") as f:
+# Load the model
+with open("kaggle2022_model(2).pkl", "rb") as f:
     model = pickle.load(f)
 
-# App title and subtitle
-st.title("💼 Salary Predictor (Kaggle Survey)")
-st.subheader("📊 Estimate your salary based on skills, experience, and education")
+# Display expected model features
+expected_features = list(model.feature_names_in_)
+st.sidebar.markdown("### 🔍 Model expects these features:")
+st.sidebar.write(expected_features)
 
-# User inputs
-education_mapping = {"HS": 0, "BS": 1, "MS": 2, "PhD": 3}
-education = st.selectbox("🎓 Education Level", list(education_mapping.keys()))
-education_num = education_mapping[education]
+# Title
+st.title("💼 Salary Prediction App (Kaggle Survey 2022)")
 
-years_coding = st.slider("👨‍💻 Years of Coding Experience", 0, 40, 5)
-country = st.selectbox("🌍 Country", ["India", "US", "Spain", "Other"])
+# User Inputs
+age = st.selectbox("Select Age Range", ["18-21", "22-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-69", "70+"])
+country = st.selectbox("Country", ["India", "US", "Spain", "Other"])
+student_status = st.selectbox("Are you a student?", ["Yes", "No"])
+codes_python = st.checkbox("I code in Python")
+codes_sql = st.checkbox("I code in SQL")
+codes_java = st.checkbox("I code in Java")
+codes_go = st.checkbox("I code in Go")
+years_coding = st.slider("Years of Coding Experience", 0, 50, 2)
 
-codes_python = st.checkbox("🐍 Codes in Python")
-codes_sql = st.checkbox("🗄️ Codes in SQL")
-codes_java = st.checkbox("☕ Codes in JAVA")
-codes_go = st.checkbox("🚀 Codes in GO")
-
-# Feature dictionary setup
-features = {
-    "Education": education_num,
-    "Years_Coding": years_coding,
-    "Codes_In_JAVA": int(codes_java),
+# Prepare input features
+input_data = {
+    "Age": age,
+    "Country_India": 1 if country == "India" else 0,
+    "Country_Spain": 1 if country == "Spain" else 0,
+    "Country_US": 1 if country == "US" else 0,
+    "Country_Other": 1 if country == "Other" else 0,
+    "Student_Status": 1 if student_status == "Yes" else 0,
     "Codes_In_Python": int(codes_python),
     "Codes_In_SQL": int(codes_sql),
+    "Codes_In_JAVA": int(codes_java),
     "Codes_In_GO": int(codes_go),
-    "Country_India": 0,
-    "Country_US": 0,
-    "Country_Spain": 0,
-    "Country_Other": 0
+    "Years_Coding": years_coding,
 }
 
-# Set one-hot encoding for country
-if country == "India":
-    features["Country_India"] = 1
-elif country == "US":
-    features["Country_US"] = 1
-elif country == "Spain":
-    features["Country_Spain"] = 1
-else:
-    features["Country_Other"] = 1
-
 # Convert to DataFrame
-input_df = pd.DataFrame([features])
+input_df = pd.DataFrame([input_data])
 
-# Predict button
-st.markdown("### 🔮 Predict Salary")
-if st.button("💵 Predict"):
+# Debugging: Show input
+st.write("📊 Input DataFrame")
+st.write(input_df)
+
+# Check feature match
+input_columns = input_df.columns.tolist()
+if set(expected_features) != set(input_columns):
+    st.error("❌ Input features do NOT match the model's expected features.")
+    st.write("Expected:", expected_features)
+    st.write("Received:", input_columns)
+else:
+    # Predict
     prediction = model.predict(input_df)[0]
-    st.success(f"💰 Estimated Salary: **${prediction:,.2f}**")
-
-# Footer
-st.markdown("---")
-st.markdown("<small>Built with ❤️ using Streamlit</small>", unsafe_allow_html=True)
+    st.success(f"💰 Estimated Salary: ${int(prediction):,}")
