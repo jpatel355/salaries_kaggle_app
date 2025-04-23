@@ -11,7 +11,7 @@ def main():
     try:
         with open('salary_model.pkl', 'rb') as model_file:
             model = pickle.load(model_file)
-        with open('model_columns.pkl', 'rb') as cols_file:
+        with open('salary_model.pkl', 'rb') as cols_file:
             model_columns = pickle.load(cols_file)
     except FileNotFoundError as e:
         st.error(f"Error: {e}. Please ensure all necessary files are in the same directory.")
