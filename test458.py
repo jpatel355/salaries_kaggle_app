@@ -6,10 +6,31 @@ import numpy as np
 def main():
     st.title("Salary Prediction App (Kaggle Survey 2022)")
     
-    # 1. Load the Model
+    # 1. Load the pickled object
     try:
         with open("Salary2022_model.pkl", "rb") as f:
-            model = pickle.load(f)
+            pickled_object = pickle.load(f)
+            
+        # Inspect what was loaded
+        st.sidebar.subheader("Model Information")
+        model_type = type(pickled_object).__name__
+        st.sidebar.write(f"Loaded object type: {model_type}")
+        
+        # If it's a dictionary, display its keys
+        if isinstance(pickled_object, dict):
+            st.sidebar.write("Dictionary keys:")
+            st.sidebar.write(list(pickled_object.keys()))
+            
+            # Check if the dictionary contains a model
+            if 'model' in pickled_object:
+                model = pickled_object['model']
+                st.sidebar.write(f"Model found in dictionary: {type(model).__name__}")
+            else:
+                st.warning("The loaded pickle file contains a dictionary but no direct model object. Using the dictionary for manual prediction.")
+                model = pickled_object  # We'll handle prediction manually
+        else:
+            model = pickled_object  # Assume it's a proper model
+            
     except FileNotFoundError:
         st.error("Error: Model file 'Salary2022_model.pkl' not found. Make sure it's in the same directory.")
         return
@@ -70,8 +91,31 @@ def main():
     # 4. Make Prediction
     if st.button("Predict Salary"):
         try:
-            prediction = model.predict(input_data)
-            st.success(f"Predicted Salary: ${prediction[0]:.2f}")
+            # If we have a standard model with predict method
+            if hasattr(model, 'predict'):
+                prediction = model.predict(input_data)
+                st.success(f"Predicted Salary: ${prediction[0]:.2f}")
+            # If we have a dictionary with coefficients (linear regression case)
+            elif isinstance(model, dict) and 'coefficients' in model and 'intercept' in model:
+                # Manual prediction for linear regression
+                features = input_data.values[0]  # Get the first row as array
+                coeffs = np.array(model['coefficients'])
+                intercept = model['intercept']
+                
+                # Show which features are being used
+                st.write("Using features for prediction:")
+                for i, coef in enumerate(coeffs):
+                    st.write(f"Feature {i}: {coef}")
+                
+                prediction = np.dot(features, coeffs) + intercept
+                st.success(f"Predicted Salary: ${prediction:.2f}")
+            # Other dictionary format
+            elif isinstance(model, dict):
+                st.info("Dictionary model structure detected. Please check the model format.")
+                st.json(model)  # Display the dictionary structure
+                st.error("Could not automatically determine how to use this dictionary for prediction.")
+            else:
+                st.error(f"Unknown model type: {type(model)}. Cannot make predictions.")
         except Exception as e:
             st.error(f"Error during prediction: {e}")
             st.info("Make sure the model expects the same features that you're providing.")
