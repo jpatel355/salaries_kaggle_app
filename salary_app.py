@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import pickle
+import os  # Import the os module
 
 def main():
     st.title("💰 Salary Prediction App 💰")  # Added a title with emojis
@@ -10,7 +11,13 @@ def main():
         model = pickle.load(model_file)
 
     # Load the training data to get the country list and column order
-    df = pd.read_csv('kaggle_survey_2022_responses.csv')
+    # Use os.path.join to handle file path correctly
+    csv_file_path = os.path.join('.', 'kaggle_survey_2022_responses.csv')  # Assuming the CSV is in the same directory
+    if not os.path.exists(csv_file_path):
+        st.error(f"Error: CSV file not found at {csv_file_path}.  Please make sure the file is in the same directory as the script, or provide the correct path.")
+        return  # Stop if the file is not found
+
+    df = pd.read_csv(csv_file_path)
     df = df.drop(index=0).reset_index(drop=True)
      # Step 4: Rename key columns
     df.rename(columns={
