@@ -4,98 +4,48 @@ import pickle
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 
-# Load the model
-try:
-    with open("kaggle2022_model (2).pkl", "rb") as f:
-        model = pickle.load(f)
-except Exception as e:
-    st.error(f"Failed to load the model: {e}")
-    # It's crucial to stop here if the model fails to load
-    st.stop()
-
-# Define expected features.  This should match the features the model was trained on *exactly*.
-expected_features = [
-    "Age",
-    "Country_India", "Country_Spain", "Country_US", "Country_Other",
-    "Student_Status",
-    "Codes_In_Python", "Codes_In_SQL", "Codes_In_JAVA", "Codes_In_GO",
-    "Years_Coding"
-]
-
-# Create Streamlit app
 def main():
-    st.title("💼 Salary Prediction App (Kaggle Survey 2022)")
+    st.title("💰 Salary Prediction App 💰")  # Added a title with emojis
 
-    # Sidebar for model explanation
-    st.sidebar.markdown("### ℹ️ Model Information")
-    st.sidebar.markdown(
-        "This app predicts salary based on several factors.  "
-        "The model was trained on data from the Kaggle 2022 survey."
-    )
-    st.sidebar.markdown("### 🔍 Expected Features:")
-    st.sidebar.write(expected_features)  # Display the expected features in the sidebar
+    # Load the pickled model
+    with open('salary_model.pkl', 'rb') as model_file:
+        model = pickle.load(model_file)
 
-    # User Inputs
-    age = st.selectbox("Select Age Range", ["18-21", "22-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-69", "70+"])
-    country = st.selectbox("Country", ["India", "US", "Spain", "Other"])
-    student_status = st.selectbox("Are you a student?", ["Yes", "No"])
-    codes_python = st.checkbox("I code in Python")
-    codes_sql = st.checkbox("I code in SQL")
-    codes_java = st.checkbox("I code in Java")
-    codes_go = st.checkbox("I code in Go")
-    years_coding = st.slider("Years of Coding Experience", 0, 50, 2)
+    # Create input widgets with a more organized layout
+    st.sidebar.header("Input Features ⚙️")  # Added a sidebar header
 
-    # Convert age range to a numerical value (e.g., lower bound)
-    age_mapping = {
-        "18-21": 18, "22-24": 22, "25-29": 25, "30-34": 30, "35-39": 35,
-        "40-44": 40, "45-49": 45, "50-54": 50, "55-59": 55, "60-69": 60, "70+": 70
-    }
-    age_num = age_mapping[age]
+    age = st.sidebar.slider("Age 🎂", 18, 65, 30)
+    country = st.sidebar.selectbox("Country 🌍", X['Country'].unique())
+    education = st.sidebar.selectbox("Education 🎓",  df['Education'].unique())
+    codes_java = st.sidebar.checkbox("Codes in Java ☕")
+    codes_python = st.sidebar.checkbox("Codes in Python 🐍")
+    codes_sql = st.sidebar.checkbox("Codes in SQL 🗄️")
+    codes_go = st.sidebar.checkbox("Codes in Go 🐹")
 
-    # Prepare input data as a dictionary
-    input_data = {
-        "Age": age_num,  # Use the numerical age
-        "Country_India": 1 if country == "India" else 0,
-        "Country_Spain": 1 if country == "Spain" else 0,
-        "Country_US": 1 if country == "US" else 0,
-        "Country_Other": 1 if country == "Other" else 0,
-        "Student_Status": 1 if student_status == "Yes" else 0,
-        "Codes_In_Python": int(codes_python),
-        "Codes_In_SQL": int(codes_sql),
-        "Codes_In_JAVA": int(codes_java),
-        "Codes_In_GO": int(codes_go),
-        "Years_Coding": years_coding,
-    }
+    # Create a DataFrame from user inputs
+    input_data = pd.DataFrame({
+        'Age': [age],
+        'Years_Coding': [age],  # Assuming Years_Coding is the same as Age for simplicity
+        'Education': [education],
+        'Codes_In_JAVA': [int(codes_java)],
+        'Codes_In_Python': [int(codes_python)],
+        'Codes_In_SQL': [int(codes_sql)],
+        'Codes_In_GO': [int(codes_go)],
+        'Country': [country],
+    })
 
-    # Convert to DataFrame
-    input_df = pd.DataFrame([input_data])
+    # One-hot encode the  country
+    input_data = pd.get_dummies(input_data, columns=['Country'], drop_first=True)
+    # Align the columns of the input data with the columns used during training.
+    input_data = input_data.reindex(columns=X_train.columns, fill_value=0)
 
-    # Debugging: Print the input DataFrame to Streamlit
-    st.write("📊 Input Data")
-    st.dataframe(input_df)
 
-    # Check if the input features match the expected features
-    input_columns = input_df.columns.tolist()
-    if set(input_columns) != set(expected_features):
-        st.error("❌ Error: Input features do not match the model's expected features.")
-        st.warning(f"Expected features: {expected_features}")
-        st.warning(f"Input features: {input_columns}")
-        return  # Stop execution if features don't match
-    else:
-        # Predict salary
-        if st.button("Predict Salary"): # Only predict when button is clicked.
-            try:
-                #START
-                if hasattr(model, 'feature_names_in_'):
-                    training_features = model.feature_names_in_
-                    st.write("Features used in training the model:", training_features)
-                else:
-                    st.write("Model does not have feature_names_in_ attribute.  Need to examine training data directly.")
-                #END
-                prediction = model.predict(input_df)[0]
-                st.success(f"💰 Estimated Salary: ${int(prediction):,}")
-            except Exception as e:
-                st.error(f"An error occurred during prediction: {e}")
+    # Make prediction
+    if st.button("Predict Salary 💰"): # Added emoji to the button
+        prediction = model.predict(input_data)
+        st.success(f"Predicted Salary: 💵 ${prediction[0]:.2f} 💵")  # Added emoji to the output
 
-if __name__ == "__main__":
+
+
+if __name__ == '__main__':
     main()
