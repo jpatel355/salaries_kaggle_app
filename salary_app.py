@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import pickle
 from sklearn.preprocessing import LabelEncoder
+import numpy as np
 
 # Load the model
 try:
@@ -79,6 +80,7 @@ def main():
         st.error("❌ Error: Input features do not match the model's expected features.")
         st.warning(f"Expected features: {expected_features}")
         st.warning(f"Input features: {input_columns}")
+        return  # Stop execution if features don't match
     else:
         # Predict salary
         if st.button("Predict Salary"): # Only predict when button is clicked.
