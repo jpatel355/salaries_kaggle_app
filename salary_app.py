@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import pickle
-from sklearn.preprocessing import LabelEncoder
-import numpy as np
 
 def main():
     st.title("💰 Salary Prediction App 💰")  # Added a title with emojis
@@ -11,12 +9,31 @@ def main():
     with open('salary_model.pkl', 'rb') as model_file:
         model = pickle.load(model_file)
 
+    # Load the training data to get the country list and column order
+    df = pd.read_csv('kaggle_survey_2022_responses.csv')
+    df = df.drop(index=0).reset_index(drop=True)
+     # Step 4: Rename key columns
+    df.rename(columns={
+        'Q2': 'Age',
+        'Q3': 'Gender',
+        'Q4': 'Country',
+        'Q5': 'Student Status',
+        'Q8': 'Education'
+    }, inplace=True)
+    categorical_cols = ['Country']
+    df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
+    df['Years_Coding'] = df['Age']
+    X = df[categorical_cols]
+    X = pd.get_dummies(X, columns=categorical_cols, drop_first=True)
+    X_train, X_test = train_test_split(X, test_size=0.2, random_state=42)
+
+
     # Create input widgets with a more organized layout
     st.sidebar.header("Input Features ⚙️")  # Added a sidebar header
 
     # Use the pre-processed data to get country list.
     age = st.sidebar.slider("Age 🎂", 18, 65, 30)
-    country = st.sidebar.selectbox("Country 🌍", X_train['Country'].unique()) # Change to X_train
+    country = st.sidebar.selectbox("Country 🌍", X_train['Country'].unique()) # Changed to X_train
     education = st.sidebar.selectbox("Education 🎓",  df['Education'].unique())
     codes_java = st.sidebar.checkbox("Codes in Java ☕")
     codes_python = st.sidebar.checkbox("Codes in Python 🐍")
@@ -50,4 +67,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
