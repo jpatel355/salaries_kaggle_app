@@ -6,7 +6,7 @@ def main():
     st.title("💰 Salary Prediction App 💰")
 
     # Correct file path to the model
-    model_file_path = os.path.join('.', 'kaggle2022_model (3).pkl')  # Use the correct model file name
+    model_file_path = os.path.join('.', 'Salary2022_model.pkl')  # Use the correct model file name
 
     # Load the pickled model and column list
     try:
