@@ -17,11 +17,9 @@ def main():
 
     # 1. Load the Model
     try:
-        with open("/content/Salary2022_model.pkl", "rb") as f:  # Use the correct model file name
+        with open("Salary2022_model.pkl", "rb") as f:  # Use the correct model file name
             model = pickle.load(f)
-    except FileNotFoundError:
-        st.error("Error: Model file 'salary_model.pkl' not found.  Make sure it's in the same directory.")
-        return  # Stop if the model isn't found
+
 
     # 2. Input Widgets
     st.sidebar.header("Input Features")
