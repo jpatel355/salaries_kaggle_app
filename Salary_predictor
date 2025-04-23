@@ -1,58 +1,66 @@
 import streamlit as st
 import pandas as pd
 import pickle
+import numpy as np  # Import numpy
 
-# Load the model
-with open("kaggle2022_model.pkl", "rb") as f:
-    model = pickle.load(f)
+def main():
+    st.title("Salary Prediction App (Kaggle Survey 2022)")
 
-# Display expected model features
-expected_features = list(model.feature_names_in_)
-st.sidebar.markdown("### 🔍 Model expects these features:")
-st.sidebar.write(expected_features)
+    # 1. Load the Model
+    try:
+        with open("salary_model.pkl", "rb") as f:  # Use the correct model file name
+            model = pickle.load(f)
+    except FileNotFoundError:
+        st.error("Error: Model file 'salary_model.pkl' not found.  Make sure it's in the same directory.")
+        return  # Stop if the model isn't found
 
-# Title
-st.title("💼 Salary Prediction App (Kaggle Survey 2022)")
+    # 2. Input Widgets
+    st.sidebar.header("Input Features")
+    age = st.sidebar.selectbox("Select Age Range",
+                             ["18-21", "22-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-69", "70+"])
+    country = st.sidebar.selectbox("Country", ["India", "US", "Spain", "Other"])
+    student_status = st.sidebar.selectbox("Are you a student?", ["Yes", "No"])
+    codes_python = st.sidebar.checkbox("I code in Python")
+    codes_sql = st.sidebar.checkbox("I code in SQL")
+    codes_java = st.sidebar.checkbox("I code in Java")
+    codes_go = st.sidebar.checkbox("I code in Go")
+    years_coding = st.sidebar.slider("Years of Coding Experience", 0, 50, 2)
+    education = st.sidebar.selectbox("Education", [0, 1, 2, 3, 4]) # Add education
 
-# User Inputs
-age = st.selectbox("Select Age Range", ["18-21", "22-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-69", "70+"])
-country = st.selectbox("Country", ["India", "US", "Spain", "Other"])
-student_status = st.selectbox("Are you a student?", ["Yes", "No"])
-codes_python = st.checkbox("I code in Python")
-codes_sql = st.checkbox("I code in SQL")
-codes_java = st.checkbox("I code in Java")
-codes_go = st.checkbox("I code in Go")
-years_coding = st.slider("Years of Coding Experience", 0, 50, 2)
+    # 3. Process Inputs
+    #  Convert age range to a numeric age (midpoint of the range)
+    age_mapping = {
+        "18-21": 19.5,
+        "22-24": 23,
+        "25-29": 27,
+        "30-34": 32,
+        "35-39": 37,
+        "40-44": 42,
+        "45-49": 47,
+        "50-54": 52,
+        "55-59": 57,
+        "60-69": 64.5,
+        "70+": 75,
+    }
+    age_numeric = age_mapping[age]
 
-# Prepare input features
-input_data = {
-    "Age": age,
-    "Country_India": 1 if country == "India" else 0,
-    "Country_Spain": 1 if country == "Spain" else 0,
-    "Country_US": 1 if country == "US" else 0,
-    "Country_Other": 1 if country == "Other" else 0,
-    "Student_Status": 1 if student_status == "Yes" else 0,
-    "Codes_In_Python": int(codes_python),
-    "Codes_In_SQL": int(codes_sql),
-    "Codes_In_JAVA": int(codes_java),
-    "Codes_In_GO": int(codes_go),
-    "Years_Coding": years_coding,
-}
+    # Create a DataFrame with the input data, including one-hot encoded country
+    input_data = pd.DataFrame({
+        'Years_Coding': [years_coding],
+        'Education': [education],  # Add education
+        'Country_India': [1 if country == "India" else 0],  # One-hot encode Country
+        'Country_US': [1 if country == "US" else 0],
+        'Country_Spain': [1 if country == "Spain" else 0],
+        'Country_Other': [1 if country == "Other" else 0],
+    })
 
-# Convert to DataFrame
-input_df = pd.DataFrame([input_data])
+    # 4. Make Prediction
+    if st.button("Predict Salary"):
+        try:
+            prediction = model.predict(input_data)
+            st.success(f"Predicted Salary: ${prediction[0]:.2f}")
+        except Exception as e:
+            st.error(f"Error during prediction: {e}")
 
-# Debugging: Show input
-st.write("📊 Input DataFrame")
-st.write(input_df)
-
-# Check feature match
-input_columns = input_df.columns.tolist()
-if set(expected_features) != set(input_columns):
-    st.error("❌ Input features do NOT match the model's expected features.")
-    st.write("Expected:", expected_features)
-    st.write("Received:", input_columns)
-else:
-    # Predict
-    prediction = model.predict(input_df)[0]
-    st.success(f"💰 Estimated Salary: ${int(prediction):,}")
+if __name__ == "__main__":
+    main()
