@@ -7,15 +7,19 @@ from sklearn.model_selection import train_test_split
 def main():
     st.title("💰 Salary Prediction App 💰")
 
-    # Load the bundled model and columns from a single .pkl file
+    # Load the bundled models from the pickle file
     try:
-        with open('kaggle2022_model (3).pkl', 'rb') as file:
+        with open('Salary2022_all_models.pkl', 'rb') as file:
             model_bundle = pickle.load(file)
-            model = model_bundle["model"]
-            model_columns = model_bundle["columns"]
+            dt_model = model_bundle['dt_model']
+            gbr_model = model_bundle['gbr_model']
+            # Load other models if needed
     except FileNotFoundError as e:
-        st.error(f"Error: {e}. Please ensure the file 'kaggle2022_model (3).pkl' is in the same directory.")
+        st.error(f"Error: {e}. Please ensure the file 'Salary2022_all_models.pkl' is in the same directory.")
         return  
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return
 
     # Load the dataset
     csv_file_path = os.path.join('.', 'kaggle_survey_2022_responses.csv')
@@ -45,11 +49,7 @@ def main():
 
     st.sidebar.header("Input Features ⚙️")
     age = st.sidebar.slider("Age 🎂", 18, 65, 30)
-
-    # Extract available countries from model columns
-    available_countries = [col.replace("Country_", "") for col in model_columns if col.startswith("Country_")]
-    country = st.sidebar.selectbox("Country 🌍", sorted(available_countries))
-    
+    country = st.sidebar.selectbox("Country 🌍", sorted(df['Country'].unique()))
     education = st.sidebar.selectbox("Education 🎓", df['Education'].dropna().unique())
     codes_java = st.sidebar.checkbox("Codes in Java ☕")
     codes_python = st.sidebar.checkbox("Codes in Python 🐍")
@@ -67,9 +67,16 @@ def main():
         'Country': [country],
     })
 
-    # One-hot encode and reindex input
+    # One-hot encode and reindex input data to match training data
     input_data = pd.get_dummies(input_data, columns=['Country'], prefix='Country')
     input_data = input_data.reindex(columns=model_columns, fill_value=0)
+
+    selected_model = st.sidebar.selectbox("Select Model", ["Decision Tree", "Gradient Boosting"])
+
+    if selected_model == "Decision Tree":
+        model = dt_model
+    elif selected_model == "Gradient Boosting":
+        model = gbr_model
 
     if st.button("Predict Salary 💰"):
         try:
