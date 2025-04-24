@@ -7,12 +7,17 @@ def main():
     try:
         with open("salary2022_model (2).pkl", "rb") as f:
             model_dict = pickle.load(f)
-            model = model_dict["model"]
 
-        st.sidebar.success("✅ Model loaded successfully!")
+            # Check if model_dict is a dictionary and contains the key "model"
+            if isinstance(model_dict, dict) and "model" in model_dict:
+                model = model_dict["model"]
+                st.sidebar.success("✅ Model loaded successfully!")
+            else:
+                st.error("🚨 Model dictionary is not in the expected format.")
+                return
 
     except FileNotFoundError:
-        st.error("File not found: 'gradient_boosting_pipeline.pkl' 📂")
+        st.error("File not found: 'salary2022_model (2).pkl' 📂")
         return
     except Exception as e:
         st.error(f"Error loading model: {e} 🤕")
@@ -69,8 +74,12 @@ def main():
         st.write(input_data)
 
     if st.button("💰 Predict Salary"):
-        prediction = model.predict(input_data)[0]
-        st.success(f"🎉 Estimated Annual Salary: ${prediction:,.2f}")
+        try:
+            # Ensure the model is able to predict
+            prediction = model.predict(input_data)[0]
+            st.success(f"🎉 Estimated Annual Salary: ${prediction:,.2f}")
+        except Exception as e:
+            st.error(f"Error making prediction: {e} 🤕")
 
     st.markdown("---")
     st.markdown("<small>✨ Built with ❤️ using Streamlit — Jiya, Rhea, and Michael", unsafe_allow_html=True)
