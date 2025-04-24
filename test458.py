@@ -13,11 +13,20 @@ def main():
             
         # Extract the model and feature names
         model = model_dict["model"]
-        feature_names = model_dict["columns"]
+        all_feature_names = model_dict["columns"]
+        
+        # Make sure we have exactly 42 features as mentioned in the error
+        feature_names = all_feature_names[:42]  # Keep only the first 42 features
         
         st.sidebar.success("Model loaded successfully!")
         st.sidebar.write(f"Model type: {type(model).__name__}")
-        st.sidebar.write(f"Number of features: {len(feature_names)}")
+        st.sidebar.write(f"Available features: {len(all_feature_names)}")
+        st.sidebar.write(f"Using features: {len(feature_names)}")
+        
+        # Display the feature we're removing (if any)
+        if len(all_feature_names) > 42:
+            removed_features = all_feature_names[42:]
+            st.sidebar.warning(f"Removing extra feature: {removed_features}")
         
     except FileNotFoundError:
         st.error("Error: Model file 'Salary2022_model.pkl' not found. Make sure it's in the same directory.")
@@ -26,7 +35,7 @@ def main():
         st.error(f"Error loading model: {e}")
         return
     
-    # Input Widgets for the first few feature names we saw
+    # Input Widgets
     st.sidebar.header("Input Features")
     
     # Programming languages
@@ -34,11 +43,13 @@ def main():
     codes_java = st.sidebar.checkbox("I code in Java")
     codes_python = st.sidebar.checkbox("I code in Python")
     codes_sql = st.sidebar.checkbox("I code in SQL", value=True)
-    codes_go = st.sidebar.checkbox("I code in Go")
+    codes_go = st.sidebar.checkbox("I code in GO")
     
     # Years coding and education
     years_coding = st.sidebar.slider("Years of Coding Experience", 0, 30, 5)
     education = st.sidebar.selectbox("Education Level", [0, 1, 2, 3, 4, 5])
+    
+    # Country
     country = st.sidebar.selectbox("Country", ["India", "US", "Other"])
     
     # Create a feature dictionary with exactly the expected features
@@ -52,7 +63,7 @@ def main():
     feature_dict["Years_Coding"] = years_coding
     feature_dict["Education"] = education
     
-    # Handle Country as one-hot encoded
+    # Handle Country as one-hot encoded (if in the feature names)
     if "Country_India" in feature_names:
         feature_dict["Country_India"] = 1 if country == "India" else 0
     if "Country_US" in feature_names:
@@ -76,27 +87,14 @@ def main():
     # Make Prediction
     if st.button("Predict Salary"):
         try:
-            # Make sure we have exactly the right number of features
-            if input_data.shape[1] != len(feature_names):
-                st.error(f"Feature count mismatch! Need {len(feature_names)} features but have {input_data.shape[1]}.")
-                
-                # Show what's missing or extra
-                df_cols = set(input_data.columns)
-                feature_set = set(feature_names)
-                
-                missing = feature_set - df_cols
-                extra = df_cols - feature_set
-                
-                if missing:
-                    st.warning(f"Missing features: {missing}")
-                if extra:
-                    st.warning(f"Extra features: {extra}")
-                    # Remove extra columns
-                    input_data = input_data[list(feature_set)]
-                    st.info(f"Removed extra features. Now have {input_data.shape[1]} features.")
-            
-            # Reindex to ensure column order matches expected order
-            input_data = input_data.reindex(columns=feature_names)
+            # Double-check feature count
+            if input_data.shape[1] != 42:
+                st.error(f"Feature count mismatch! Need 42 features but have {input_data.shape[1]}.")
+                # If too many features, drop extras
+                if input_data.shape[1] > 42:
+                    input_data = input_data.iloc[:, :42]
+                    st.info(f"Dropped extra features. Now have {input_data.shape[1]} features.")
+                # If too few features, this will fail, but at least we've checked
             
             # Make prediction
             prediction = model.predict(input_data)
@@ -116,7 +114,37 @@ def main():
             
         except Exception as e:
             st.error(f"Error during prediction: {e}")
-            st.info("Make sure the model expects the same features that you're providing.")
+            
+            # Debug information
+            st.write("Input data shape:", input_data.shape)
+            if hasattr(model, 'n_features_in_'):
+                st.write("Model expected features:", model.n_features_in_)
+            
+            st.info("Try inspecting the model using debug features to ensure exact compatibility.")
+
+    # Add a debug section
+    if st.sidebar.checkbox("Debug Mode"):
+        st.subheader("Debug Information")
+        
+        if st.button("Inspect Model"):
+            try:
+                # Show model attributes
+                if hasattr(model, 'n_features_in_'):
+                    st.write("Model expected feature count:", model.n_features_in_)
+                
+                if hasattr(model, 'feature_names_in_'):
+                    st.write("Model expected feature names:", model.feature_names_in_)
+                
+                # Try to get feature importance
+                if hasattr(model, 'feature_importances_'):
+                    importances = model.feature_importances_
+                    indices = np.argsort(importances)[::-1]
+                    
+                    st.write("Top 10 important features:")
+                    for i in range(min(10, len(indices))):
+                        st.write(f"{i+1}. {feature_names[indices[i]]}: {importances[indices[i]]:.4f}")
+            except Exception as debug_error:
+                st.error(f"Debug error: {debug_error}")
 
 if __name__ == "__main__":
     main()
