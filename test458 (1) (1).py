@@ -28,12 +28,12 @@ def main():
     expected_features = len(feature_names)
 
     # Load the trained regression model and potentially the scaler
-    scaler = None
+scaler = None
     try:
         with open("Salary2022_model(1).pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
-            all_features_from_model = model_dict["columns"]
+            all_features_from_model = model_dict.get("columns") # Use .get() to handle potential absence
             if 'scaler' in model_dict:
                 scaler = model_dict['scaler']
             elif 'standard_scaler' in model_dict:
@@ -41,10 +41,16 @@ def main():
 
             st.sidebar.success("✅ Model loaded successfully!")
             st.sidebar.write(f"🧠 Model type: {type(model).__name__}")
-            st.sidebar.write(f"✨ Available features in model file: {len(all_features_from_model)}")
-            st.sidebar.write(f"➡️ Using features for prediction: {expected_features}")
-            if len(all_features_from_model) > expected_features:
-                st.sidebar.warning(f"⚠️ Not using extra features: {all_features_from_model[expected_features:]}")
+            if all_features_from_model:
+                st.sidebar.write(f"✨ Available features in model file: {len(all_features_from_model)}")
+                st.sidebar.write(f"➡️ Using features for prediction: {expected_features}")
+                if len(all_features_from_model) > expected_features:
+                    st.sidebar.warning(f"⚠️ Not using extra features: {all_features_from_model[expected_features:]}")
+
+                # Print the loaded feature names to the console (for debugging)
+                print("Features loaded from pickle file:", all_features_from_model)
+            else:
+                st.sidebar.warning("⚠️ Feature column names not found in the loaded model.")
 
             st.sidebar.header("⚙️ Input Features")
 
