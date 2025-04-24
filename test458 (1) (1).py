@@ -5,19 +5,14 @@ import pickle
 def main():
     # Load the trained model first to ensure it's ready
     try:
-        with open("salary2022_model (2).pkl", "rb") as f:
-            model_dict = pickle.load(f)
+        # Directly load the model saved using pickle
+        with open("salary2022_model.pkl", "rb") as f:
+            model = pickle.load(f)
 
-            # Check if model_dict is a dictionary and contains the key "model"
-            if isinstance(model_dict, dict) and "model" in model_dict:
-                model = model_dict["model"]
-                st.sidebar.success("✅ Model loaded successfully!")
-            else:
-                st.error("🚨 Model dictionary is not in the expected format.")
-                return
+        st.sidebar.success("✅ Model loaded successfully!")
 
     except FileNotFoundError:
-        st.error("File not found: 'salary2022_model (2).pkl' 📂")
+        st.error("File not found: 'salary2022_model.pkl' 📂")
         return
     except Exception as e:
         st.error(f"Error loading model: {e} 🤕")
