@@ -27,7 +27,8 @@ def main():
             if len(all_feature_names) > expected_features:
                 removed_features = all_feature_names[expected_features:]
                 st.sidebar.warning(f"Not using these extra features: {removed_features}")
-
+  st.sidebar.subheader("Expected Features:")
+            st.sidebar.write(all_feature_names)
     except FileNotFoundError:
         st.error("Error: Model file 'Salary2022_model.pkl' not found.")
         return
