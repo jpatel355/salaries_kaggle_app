@@ -79,7 +79,16 @@ def main():
                     st.error("🚨 Mismatch in feature columns.")
                     st.text(f"Difference:\n{set(all_features_from_model) ^ set(input_data.columns)}")
                 else:
-                    # Align input to model's expected column order
+                    # Debugging: Print the column names from both the input and the model
+                    st.text(f"Input Columns: {input_data.columns}")
+                    st.text(f"Model Columns: {all_features_from_model}")
+
+                    # Ensure all columns are present, filling with default values (e.g., 0)
+                    missing_columns = set(all_features_from_model) - set(input_data.columns)
+                    for col in missing_columns:
+                        input_data[col] = 0
+
+                    # Align columns
                     input_data = input_data[all_features_from_model]
 
                     if scaler:
