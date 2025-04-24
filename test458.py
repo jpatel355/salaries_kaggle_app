@@ -2,13 +2,15 @@ import streamlit as st
 import pandas as pd
 import pickle
 import numpy as np
+from sklearn.preprocessing import StandardScaler  # Import StandardScaler
 
 def main():
     st.title("Salary Prediction App (Kaggle Survey 2022)")
     st.subheader(" Predict your salary based on skills, experience, and education")
 
-    # Define the education mapping (VERIFY THIS AGAINST TRAINING DATA)
-    education_mapping = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5} # Assuming direct mapping
+    # Define a more common education mapping (you might need to adjust this)
+    education_mapping = {'HS': 0, 'BS': 1, 'MS': 2, 'PHD': 3, 'Associate': 1, 'Professional degree': 2, 'I never completed any formal education': 0, 'Primary/elementary school': 0, 'Some college/university study without earning a bachelor’s degree': 1, 'Secondary school (e.g. American high school, German Realschule or Gymnasium, etc.)': 0, 'Some doctoral-level study without earning a doctorate': 3}
+    education_options = list(education_mapping.keys())
 
     # List of the 42 features the model expects
     feature_names = [
@@ -25,12 +27,17 @@ def main():
     ]
     expected_features = len(feature_names)
 
-    # Load the trained regression model
+    # Load the trained regression model and potentially the scaler
+    scaler = None
     try:
         with open("Salary2022_model.pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
             all_features_from_model = model_dict["columns"]
+            if 'scaler' in model_dict:
+                scaler = model_dict['scaler']
+            elif 'standard_scaler' in model_dict:
+                scaler = model_dict['standard_scaler']
 
             st.sidebar.success("Model loaded successfully!")
             st.sidebar.write(f"Model type: {type(model).__name__}")
@@ -46,7 +53,7 @@ def main():
             codes_sql = st.sidebar.checkbox("I code in SQL", key="sql")
             codes_go = st.sidebar.checkbox("I code in GO", key="go")
             years_coding = st.sidebar.slider("Years of Coding Experience", 0, 30, 5, key="years")
-            education_index = st.sidebar.selectbox("Education Level", list(education_mapping.keys()), key="education")
+            education_str = st.sidebar.selectbox("Education Level", education_options, key="education")
             country = st.sidebar.selectbox("Country", [
                 "Australia", "Bangladesh", "Brazil", "Canada", "Chile", "China", "Colombia", "Egypt",
                 "France", "Ghana", "India", "Indonesia", "Iran, Islamic Republic of...", "Israel",
@@ -56,14 +63,14 @@ def main():
                 "United Kingdom of Great Britain and Northern Ireland", "United States of America"
             ], key="country")
 
-            # Create the feature dictionary in the correct order
+            # Create the feature dictionary
             features = {}
             features["Codes_In_JAVA"] = int(codes_java)
             features["Codes_In_Python"] = int(codes_python)
             features["Codes_In_SQL"] = int(codes_sql)
             features["Codes_In_GO"] = int(codes_go)
             features["Years_Coding"] = years_coding
-            features["Education"] = education_mapping[education_index] # Use the mapping
+            features["Education"] = education_mapping.get(education_str, 0) # Use .get() with a default
 
             for country_name in [
                 "Australia", "Bangladesh", "Brazil", "Canada", "Chile", "China", "Colombia", "Egypt",
@@ -75,7 +82,7 @@ def main():
             ]:
                 features[f"Country_{country_name}"] = 1 if country == country_name else 0
 
-            # Create the input DataFrame with the specified column order
+            # Create the input DataFrame with the correct column order
             input_data = pd.DataFrame([features], columns=feature_names)
 
             if st.checkbox("Show input features"):
@@ -88,6 +95,11 @@ def main():
                     if input_data.shape[1] != expected_features:
                         st.error(f"Error: Expected {expected_features} features, got {input_data.shape[1]}.")
                     else:
+                        # Scale the numerical features if a scaler is loaded
+                        numerical_features = ["Years_Coding", "Education"] # Identify numerical features
+                        if scaler:
+                            input_data[numerical_features] = scaler.transform(input_data[numerical_features])
+
                         prediction = model.predict(input_data)
                         st.success(f" Estimated Annual Salary: ${prediction[0]:,.2f}")
 
