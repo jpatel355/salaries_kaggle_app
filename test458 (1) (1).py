@@ -5,7 +5,7 @@ import pickle
 def main():
     # Load the trained model first to ensure it's ready
     try:
-        with open("gradient_boosting_pipeline.pkl", "rb") as f:
+        with open("salary2022_model (2).pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
 
