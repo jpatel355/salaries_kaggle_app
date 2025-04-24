@@ -128,7 +128,7 @@ def main():
 
     st.markdown("---")
     st.markdown(
-        "<small>✨ Built with ❤️ using Streamlit — by Your AI Assistant</small>",
+        "<small>✨ Built with ❤️ using Streamlit — Jiya, Rhea, and Michael",
         unsafe_allow_html=True
     )
 
