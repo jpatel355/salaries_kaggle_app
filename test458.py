@@ -30,7 +30,7 @@ def main():
     # Load the trained regression model and potentially the scaler
     scaler = None
     try:
-        with open("Salary2022_model.pkl", "rb") as f:
+        with open("Salary22_model.pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
             all_features_from_model = model_dict["columns"]
@@ -120,7 +120,7 @@ def main():
                     st.info("⚠️ Check error and ensure input matches model expectations.")
 
     except FileNotFoundError:
-        st.error("File not found: 'Salary2022_model.pkl' 📂")
+        st.error("File not found: 'Salary22_model.pkl' 📂")
         return
     except Exception as e:
         st.error(f"Error loading model: {e} 🤕")
