@@ -5,8 +5,7 @@ import pickle
 def main():
     # Load the trained model first to ensure it's ready
     try:
-        # Directly load the model saved using pickle
-        with open("salary2022_model (2).pkl", "rb") as f:
+        with open("salary2022_model.pkl", "rb") as f:
             model = pickle.load(f)
 
         st.sidebar.success("✅ Model loaded successfully!")
@@ -24,10 +23,12 @@ def main():
     education_mapping = {'HS': 0, 'BS': 1, 'MS': 2, 'PHD': 3}
     education_options = list(education_mapping.keys())
 
-    # Feature names for the model
+    # Full list of features the model expects (this should match the training dataset's feature list)
     feature_names = [
         "Codes_In_JAVA", "Codes_In_Python", "Codes_In_SQL", "Codes_In_GO", "Years_Coding", "Education",
-        "Country_India", "Country_US", "Country_Spain", "Country_Other"
+        "Country_India", "Country_US", "Country_Spain", "Country_Other",
+        # Add any other features that the model expects here, such as:
+        # "Country_Canada", "Country_Germany", "Country_China", etc.
     ]
 
     education = st.sidebar.selectbox("Education Level", education_options)
@@ -40,6 +41,7 @@ def main():
 
     education_num = education_mapping[education]
 
+    # Creating the input features
     features = {
         "Education": education_num,
         "Years_Coding": years_coding,
@@ -47,12 +49,15 @@ def main():
         "Codes_In_Python": int(codes_python),
         "Codes_In_SQL": int(codes_sql),
         "Codes_In_GO": int(codes_go),
+        # Initializing country variables to 0
         "Country_India": 0,
         "Country_Other": 0,
         "Country_Spain": 0,
         "Country_US": 0,
+        # Add additional country variables here if necessary
     }
 
+    # One-hot encoding for country
     if country != "Canada":
         if country == "India":
             features["Country_India"] = 1
@@ -63,7 +68,8 @@ def main():
         elif country == "Other":
             features["Country_Other"] = 1
 
-    input_data = pd.DataFrame([features])
+    # Ensure that the number of features matches the model's expectations
+    input_data = pd.DataFrame([features], columns=feature_names)
 
     if st.checkbox("🔍 Show input features"):
         st.write(input_data)
