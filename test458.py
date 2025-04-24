@@ -6,12 +6,50 @@ import numpy as np
 def main():
     st.title("Salary Prediction App (Kaggle Survey 2022)")
     
-    # 1. Load the Model
+    # 1. Load the pickled dictionary
     try:
         with open("Salary2022_model.pkl", "rb") as f:
-            model = pickle.load(f)
-        st.sidebar.success("Model loaded successfully!")
-        st.sidebar.write(f"Model type: {type(model).__name__}")
+            model_dict = pickle.load(f)
+        
+        # Check what's in the dictionary
+        st.sidebar.success("Model dictionary loaded successfully!")
+        st.sidebar.write("Dictionary keys:")
+        dict_keys = list(model_dict.keys())
+        st.sidebar.write(dict_keys)
+        
+        # The dictionary likely contains the model and feature names
+        # Let's look for common patterns
+        if 'model' in model_dict:
+            model = model_dict['model']
+            st.sidebar.write(f"Found model of type: {type(model).__name__}")
+        else:
+            st.sidebar.warning("No direct model found in dictionary")
+            model = None
+            
+        # Check if feature names are stored
+        feature_names = None
+        possible_feature_keys = ['feature_names', 'features', 'columns', 'column_names']
+        for key in possible_feature_keys:
+            if key in model_dict:
+                feature_names = model_dict[key]
+                st.sidebar.write(f"Found feature names under key: '{key}'")
+                break
+                
+        if feature_names is None and model is not None:
+            if hasattr(model, 'feature_names_in_'):
+                feature_names = model.feature_names_in_
+                st.sidebar.write("Found feature names in model.feature_names_in_")
+            
+        # If we found feature names, use them
+        if feature_names is not None:
+            st.sidebar.info(f"Number of expected features: {len(feature_names)}")
+            st.sidebar.write("First few feature names:")
+            st.sidebar.write(feature_names[:5])
+        else:
+            st.sidebar.warning("Could not determine feature names from the model dictionary")
+            # Assume we need 42 features as mentioned in the error message
+            feature_names = [f"feature_{i}" for i in range(42)]
+            
     except FileNotFoundError:
         st.error("Error: Model file 'Salary2022_model.pkl' not found. Make sure it's in the same directory.")
         return
@@ -19,7 +57,7 @@ def main():
         st.error(f"Error loading model: {e}")
         return
         
-    # 2. Input Widgets
+    # 2. Input Widgets (keeping the same inputs, but we'll be more selective with feature creation)
     st.sidebar.header("Input Features")
     
     # Basic demographic info
@@ -53,161 +91,178 @@ def main():
     codes_sql = st.sidebar.checkbox("SQL", value=True)
     codes_java = st.sidebar.checkbox("Java")
     codes_javascript = st.sidebar.checkbox("JavaScript")
-    codes_julia = st.sidebar.checkbox("Julia")
-    codes_c = st.sidebar.checkbox("C/C++")
-    codes_go = st.sidebar.checkbox("Go")
     
     # Tools & Platforms
     st.sidebar.subheader("Tools & Platforms")
     uses_jupyter = st.sidebar.checkbox("Jupyter", value=True)
-    uses_rstudio = st.sidebar.checkbox("RStudio")
     uses_vscode = st.sidebar.checkbox("VS Code", value=True)
-    uses_pycharm = st.sidebar.checkbox("PyCharm")
     uses_tableau = st.sidebar.checkbox("Tableau")
     uses_excel = st.sidebar.checkbox("Excel")
-    uses_powerbi = st.sidebar.checkbox("Power BI")
-    
-    # ML Frameworks
-    st.sidebar.subheader("ML Frameworks")
-    uses_scikit = st.sidebar.checkbox("Scikit-learn", value=True)
-    uses_tensorflow = st.sidebar.checkbox("TensorFlow")
-    uses_pytorch = st.sidebar.checkbox("PyTorch")
-    uses_keras = st.sidebar.checkbox("Keras")
-    uses_xgboost = st.sidebar.checkbox("XGBoost")
     
     # Company size
     company_size = st.sidebar.selectbox("Company Size", 
                                       ["0-49 employees", "50-249 employees", "250-999 employees", 
                                        "1000-9,999 employees", "10,000+ employees"])
     
-    # 3. Process Inputs
-    # Convert age range to a numeric value
-    age_mapping = {
-        "18-21": 19.5, "22-24": 23, "25-29": 27, "30-34": 32,
+    # 3. Create features based on input
+    # First, establish a baseline feature dictionary with all zeros for all expected features
+    feature_dict = {name: 0 for name in feature_names}
+    
+    # Now, try to map our inputs to the expected feature names
+    # We'll use fuzzy matching logic to handle different naming conventions
+    
+    # Helper function to set feature values based on partial name matches
+    def set_feature_value(feature_dict, keyword, value):
+        matches = [name for name in feature_dict.keys() if keyword.lower() in name.lower()]
+        for match in matches:
+            feature_dict[match] = value
+        return len(matches) > 0  # Return whether any matches were found
+    
+    # Age - try to match it to age-related features
+    age_numeric = {
+        "18-21": 20, "22-24": 23, "25-29": 27, "30-34": 32,
         "35-39": 37, "40-44": 42, "45-49": 47, "50-54": 52,
-        "55-59": 57, "60-69": 64.5, "70+": 75
+        "55-59": 57, "60-69": 65, "70+": 75
+    }[age]
+    
+    set_feature_value(feature_dict, 'age', age_numeric)
+    
+    # Gender
+    gender_mapping = {
+        "Man": ['male', 'man'],
+        "Woman": ['female', 'woman'],
+        "Non-binary": ['nonbinary', 'non_binary', 'non-binary'],
+        "Prefer not to say": ['prefer_not', 'noanswer']
     }
-    age_numeric = age_mapping[age]
+    for gender_term in gender_mapping[gender]:
+        set_feature_value(feature_dict, gender_term, 1)
     
-    # Create a comprehensive input data dictionary
-    input_dict = {
-        # Map all inputs to appropriate feature names
-        'Age': age_numeric,
-        'Years_Coding': years_coding,
-        'Years_DataScience': years_data_science,
-        
-        # One-hot encode categorical variables
-        # Gender
-        'Gender_Man': 1 if gender == "Man" else 0,
-        'Gender_Woman': 1 if gender == "Woman" else 0,
-        'Gender_NonBinary': 1 if gender == "Non-binary" else 0,
-        'Gender_NoAnswer': 1 if gender == "Prefer not to say" else 0,
-        
-        # Education
-        'Education_HighSchool': 1 if education == "No formal education past high school" else 0,
-        'Education_SomeCollege': 1 if education == "Some college/university study without earning a degree" else 0,
-        'Education_Bachelors': 1 if education == "Bachelor's degree" else 0,
-        'Education_Masters': 1 if education == "Master's degree" else 0,
-        'Education_Doctoral': 1 if education == "Doctoral degree" else 0,
-        'Education_Professional': 1 if education == "Professional degree" else 0,
-        
-        # Employment
-        'Employment_FullTime': 1 if employment_status == "Employed full-time" else 0,
-        'Employment_PartTime': 1 if employment_status == "Employed part-time" else 0,
-        'Employment_Freelance': 1 if employment_status == "Independent contractor/freelancer" else 0,
-        'Employment_Student': 1 if employment_status == "Student" else 0,
-        'Employment_NotWorking': 1 if "Not employed" in employment_status else 0,
-        
-        # Country
-        'Country_US': 1 if country == "United States" else 0,
-        'Country_India': 1 if country == "India" else 0,
-        'Country_Germany': 1 if country == "Germany" else 0,
-        'Country_UK': 1 if country == "UK" else 0,
-        'Country_Canada': 1 if country == "Canada" else 0,
-        'Country_Other': 1 if country not in ["United States", "India", "Germany", "UK", "Canada"] else 0,
-        
-        # Programming Languages
-        'Language_Python': 1 if codes_python else 0,
-        'Language_R': 1 if codes_r else 0,
-        'Language_SQL': 1 if codes_sql else 0,
-        'Language_Java': 1 if codes_java else 0,
-        'Language_JavaScript': 1 if codes_javascript else 0,
-        'Language_Julia': 1 if codes_julia else 0,
-        'Language_C': 1 if codes_c else 0,
-        'Language_Go': 1 if codes_go else 0,
-        
-        # Tools
-        'Tool_Jupyter': 1 if uses_jupyter else 0,
-        'Tool_RStudio': 1 if uses_rstudio else 0,
-        'Tool_VSCode': 1 if uses_vscode else 0,
-        'Tool_PyCharm': 1 if uses_pycharm else 0,
-        'Tool_Tableau': 1 if uses_tableau else 0,
-        'Tool_Excel': 1 if uses_excel else 0,
-        'Tool_PowerBI': 1 if uses_powerbi else 0,
-        
-        # ML Frameworks
-        'ML_ScikitLearn': 1 if uses_scikit else 0,
-        'ML_TensorFlow': 1 if uses_tensorflow else 0,
-        'ML_PyTorch': 1 if uses_pytorch else 0,
-        'ML_Keras': 1 if uses_keras else 0,
-        'ML_XGBoost': 1 if uses_xgboost else 0,
-        
-        # Company Size
-        'Company_Small': 1 if company_size == "0-49 employees" else 0,
-        'Company_Medium': 1 if company_size == "50-249 employees" else 0,
-        'Company_Large': 1 if company_size == "250-999 employees" else 0,
-        'Company_VeryLarge': 1 if company_size == "1000-9,999 employees" else 0,
-        'Company_Enterprise': 1 if company_size == "10,000+ employees" else 0,
+    # Country
+    country_keywords = {
+        "United States": ['us', 'usa', 'united_states', 'america'],
+        "India": ['india'],
+        "Germany": ['germany', 'deutschland'],
+        "UK": ['uk', 'united_kingdom', 'great_britain'],
+        "Canada": ['canada'],
+        "Other": ['other']
     }
+    selected_country = country_keywords.get(country, [country.lower()])
+    for term in selected_country:
+        set_feature_value(feature_dict, term, 1)
     
-    # Create a DataFrame from the input dictionary
-    input_data = pd.DataFrame([input_dict])
+    # Education
+    edu_mapping = {
+        "No formal education past high school": ['high_school', 'no_degree'],
+        "Some college/university study without earning a degree": ['some_college', 'no_degree'],
+        "Bachelor's degree": ['bachelor', 'bs', 'ba'],
+        "Master's degree": ['master', 'ms', 'ma'],
+        "Doctoral degree": ['phd', 'doctorate', 'doctoral'],
+        "Professional degree": ['professional', 'md', 'jd']
+    }
+    for edu_term in edu_mapping[education]:
+        set_feature_value(feature_dict, edu_term, 1)
     
-    # Display feature information
-    if st.checkbox("Show model feature count"):
-        # Get the feature count expected by the model (if available)
-        expected_feature_count = 42  # From error message
-        actual_feature_count = len(input_data.columns)
-        st.write(f"Expected features: {expected_feature_count}")
-        st.write(f"Current features: {actual_feature_count}")
+    # Employment
+    emp_mapping = {
+        "Employed full-time": ['full_time', 'employed'],
+        "Employed part-time": ['part_time'],
+        "Independent contractor/freelancer": ['freelance', 'contractor'],
+        "Student": ['student'],
+        "Not employed": ['unemployed', 'not_employed']
+    }
+    for status in emp_mapping:
+        if status in employment_status:
+            for term in emp_mapping[status]:
+                set_feature_value(feature_dict, term, 1)
+    
+    # Years of experience
+    set_feature_value(feature_dict, 'year', years_coding)
+    set_feature_value(feature_dict, 'coding', years_coding)
+    set_feature_value(feature_dict, 'experience', years_coding)
+    set_feature_value(feature_dict, 'data_science', years_data_science)
+    
+    # Programming languages
+    if codes_python:
+        set_feature_value(feature_dict, 'python', 1)
+    if codes_r:
+        set_feature_value(feature_dict, '_r_', 1)  # Underscore to avoid matching other features containing 'r'
+    if codes_sql:
+        set_feature_value(feature_dict, 'sql', 1)
+    if codes_java:
+        set_feature_value(feature_dict, 'java', 1)
+    if codes_javascript:
+        set_feature_value(feature_dict, 'javascript', 1)
         
-        if expected_feature_count != actual_feature_count:
-            st.warning(f"Feature count mismatch! The model expects {expected_feature_count} features, but we have {actual_feature_count}.")
+    # Tools
+    if uses_jupyter:
+        set_feature_value(feature_dict, 'jupyter', 1)
+    if uses_vscode:
+        set_feature_value(feature_dict, 'vscode', 1)
+    if uses_tableau:
+        set_feature_value(feature_dict, 'tableau', 1)
+    if uses_excel:
+        set_feature_value(feature_dict, 'excel', 1)
+    
+    # Company size
+    company_size_mapping = {
+        "0-49 employees": ['small', 'startup'],
+        "50-249 employees": ['small_medium'],
+        "250-999 employees": ['medium'],
+        "1000-9,999 employees": ['large'],
+        "10,000+ employees": ['enterprise', 'very_large']
+    }
+    for size_term in company_size_mapping[company_size]:
+        set_feature_value(feature_dict, size_term, 1)
+    
+    # Create input dataframe with the exact features the model expects
+    input_data = pd.DataFrame([feature_dict])
     
     # Display the input data for verification
     if st.checkbox("Show input features"):
         st.write(input_data)
+        st.info(f"Total features: {input_data.shape[1]}")
     
     # 4. Make Prediction
     if st.button("Predict Salary"):
         try:
-            # Check feature count before prediction
-            if hasattr(model, 'n_features_in_'):
-                expected_features = model.n_features_in_
-                if expected_features != input_data.shape[1]:
-                    st.warning(f"Feature count mismatch! Model expects {expected_features} features, but input has {input_data.shape[1]}.")
+            # Try different prediction approaches based on the dict structure
+            prediction = None
+            
+            # If we have a model object
+            if model is not None and hasattr(model, 'predict'):
+                prediction = model.predict(input_data)[0]
+                
+            # If we have a precomputed coefficient/intercept in the dictionary
+            elif 'coefficients' in model_dict and 'intercept' in model_dict:
+                coeffs = np.array(model_dict['coefficients'])
+                intercept = model_dict['intercept']
+                
+                # Ensure coefficient count matches feature count
+                if len(coeffs) == len(feature_names):
+                    prediction = np.dot(input_data.values[0], coeffs) + intercept
+                else:
+                    st.error(f"Coefficient count ({len(coeffs)}) doesn't match feature count ({len(feature_names)})")
                     
-                    missing_count = expected_features - input_data.shape[1]
-                    if missing_count > 0:
-                        # Add dummy features to match the expected count
-                        st.info(f"Adding {missing_count} dummy features to match model expectations.")
-                        for i in range(missing_count):
-                            input_data[f'dummy_feature_{i}'] = 0
-                    elif missing_count < 0:
-                        st.info("Model expects fewer features than provided. Some features may be ignored.")
-            
-            # Make prediction
-            prediction = model.predict(input_data)
-            
+            # Check if there's a predict function in the dictionary
+            elif 'predict_function' in model_dict:
+                prediction = model_dict['predict_function'](input_data)
+                
+            # If all else fails, display the dictionary contents for debugging
+            if prediction is None:
+                st.error("Couldn't determine how to make predictions with the provided model dictionary")
+                st.write("Dictionary contents:")
+                st.json({k: str(v)[:100] for k, v in model_dict.items()})  # Show truncated values
+                return
+                
             # Display results
-            st.success(f"Predicted Annual Salary: ${prediction[0]:,.2f}")
+            st.success(f"Predicted Annual Salary: ${prediction:,.2f}")
             
             # Add some contextual ranges
-            if prediction[0] < 40000:
+            if prediction < 40000:
                 st.info("This is in the entry-level salary range.")
-            elif prediction[0] < 80000:
+            elif prediction < 80000:
                 st.info("This is in the mid-level salary range.")
-            elif prediction[0] < 120000:
+            elif prediction < 120000:
                 st.info("This is in the senior-level salary range.")
             else:
                 st.info("This is in the expert/leadership salary range.")
@@ -215,6 +270,14 @@ def main():
         except Exception as e:
             st.error(f"Error during prediction: {e}")
             st.info("Make sure the model expects the same features that you're providing.")
+            
+            # Additional debugging info
+            st.write("Dictionary keys:", dict_keys)
+            
+            # If there's a 'predict' key in the dictionary, it might be a custom prediction function
+            if 'predict' in model_dict:
+                st.info("Found 'predict' key in dictionary. This might be a custom function or another object.")
+                st.write("Type of model_dict['predict']:", type(model_dict['predict']).__name__)
 
 if __name__ == "__main__":
     main()
