@@ -120,7 +120,7 @@ def main():
                     st.info("⚠️ Check error and ensure input matches model expectations.")
 
     except FileNotFoundError:
-        st.error("File not found: 'Salary2022_model.pkl' 📂")
+        st.error("File not found: 'Salary2022_model(1).pkl' 📂")
         return
     except Exception as e:
         st.error(f"Error loading model: {e} 🤕")
