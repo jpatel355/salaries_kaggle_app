@@ -95,10 +95,12 @@ def main():
                     if input_data.shape[1] != expected_features:
                         st.error(f"🚨 Error: Expected {expected_features} features, got {input_data.shape[1]}.")
                     else:
-                        # Scale the numerical features if a scaler is loaded
-                        numerical_features = ["Years_Coding", "Education"] # Identify numerical features
+                        # Scale all features using the loaded scaler
                         if scaler:
-                            input_data[numerical_features] = scaler.transform(input_data[numerical_features])
+                            input_data = scaler.transform(input_data)
+                            input_data = pd.DataFrame(input_data, columns=feature_names) # Recreate DataFrame with column names
+                        else:
+                            st.warning("⚠️ Scaler not found in the loaded model. Predictions might be less accurate.")
 
                         prediction = model.predict(input_data)
                         st.success(f"🎉 Estimated Annual Salary: ${prediction[0]:,.2f}")
