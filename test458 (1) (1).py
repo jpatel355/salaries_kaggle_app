@@ -28,8 +28,8 @@ def main():
     expected_features = len(feature_names)
 
     # Load the trained regression model and potentially the scaler
-scaler = None
-try:
+    scaler = None
+    try:
         with open("Salary2022_model(1).pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
@@ -102,11 +102,13 @@ try:
                         st.error(f"🚨 Error: Expected {expected_features} features, got {input_data.shape[1]}.")
                     else:
                         # Scale all features using the loaded scaler
-                        if scaler:
-                            input_data = scaler.transform(input_data)
-                            input_data = pd.DataFrame(input_data, columns=feature_names) # Recreate DataFrame with column names
-                        else:
+                        if scaler is not None and all_features_from_model is not None:
+                            input_data_scaled = scaler.transform(input_data)
+                            input_data = pd.DataFrame(input_data_scaled, columns=all_features_from_model)
+                        elif scaler is None:
                             st.warning("⚠️ Scaler not found in the loaded model. Predictions might be less accurate.")
+                        elif all_features_from_model is None:
+                            st.warning("⚠️ Feature column names not found in the loaded model. Predictions might be less accurate.")
 
                         prediction = model.predict(input_data)
                         st.success(f"🎉 Estimated Annual Salary: ${prediction[0]:,.2f}")
@@ -126,7 +128,6 @@ try:
                     if hasattr(model, 'n_features_in_'):
                         st.write("Model expected features:", model.n_features_in_)
                     st.info("⚠️ Check error and ensure input matches model expectations.")
-
     except FileNotFoundError:
         st.error("File not found: 'Salary2022_model(1).pkl' 📂")
         return
