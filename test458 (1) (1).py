@@ -23,7 +23,7 @@ def main():
         "Country_Philippines", "Country_Poland", "Country_Russia", "Country_South Africa",
         "Country_South Korea", "Country_Spain", "Country_Taiwan", "Country_Thailand", "Country_Tunisia",
         "Country_Turkey", "Country_United Kingdom of Great Britain and Northern Ireland",
-        "Country_United States of America", "Viet Nam"
+        "Country_United States of America", "Country_Viet Nam"
     ]
     expected_features = len(feature_names)
 
