@@ -23,14 +23,16 @@ def main():
     education_mapping = {'HS': 0, 'BS': 1, 'MS': 2, 'PHD': 3}
     education_options = list(education_mapping.keys())
 
-    # Full list of features the model expects (this should match the training dataset's feature list)
+    # List of all features the model expects (replace with actual features)
     feature_names = [
         "Codes_In_JAVA", "Codes_In_Python", "Codes_In_SQL", "Codes_In_GO", "Years_Coding", "Education",
         "Country_India", "Country_US", "Country_Spain", "Country_Other",
-        # Add any other features that the model expects here, such as:
-        # "Country_Canada", "Country_Germany", "Country_China", etc.
+        # Add additional country features as needed:
+        # "Country_Canada", "Country_Germany", "Country_France", etc.
+        # Add any other features like interaction terms if used in training
     ]
 
+    # Assuming we have the list of features, here’s how we prepare the input data
     education = st.sidebar.selectbox("Education Level", education_options)
     years_coding = st.sidebar.slider("⏳ Years of Coding Experience", 0, 40, 5)
     country = st.sidebar.selectbox("🌎 Country", ["India", "US", "Canada", "Spain", "Other"])
@@ -41,7 +43,7 @@ def main():
 
     education_num = education_mapping[education]
 
-    # Creating the input features
+    # Initialize the feature dictionary
     features = {
         "Education": education_num,
         "Years_Coding": years_coding,
@@ -49,12 +51,12 @@ def main():
         "Codes_In_Python": int(codes_python),
         "Codes_In_SQL": int(codes_sql),
         "Codes_In_GO": int(codes_go),
-        # Initializing country variables to 0
+        # Initializing country variables to 0 (one-hot encoding)
         "Country_India": 0,
         "Country_Other": 0,
         "Country_Spain": 0,
         "Country_US": 0,
-        # Add additional country variables here if necessary
+        # Add other country features here as needed
     }
 
     # One-hot encoding for country
@@ -68,7 +70,7 @@ def main():
         elif country == "Other":
             features["Country_Other"] = 1
 
-    # Ensure that the number of features matches the model's expectations
+    # Create input DataFrame based on features
     input_data = pd.DataFrame([features], columns=feature_names)
 
     if st.checkbox("🔍 Show input features"):
@@ -76,7 +78,7 @@ def main():
 
     if st.button("💰 Predict Salary"):
         try:
-            # Ensure the model is able to predict
+            # Ensure the input has all the features the model expects
             prediction = model.predict(input_data)[0]
             st.success(f"🎉 Estimated Annual Salary: ${prediction:,.2f}")
         except Exception as e:
