@@ -7,8 +7,8 @@ def main():
     st.title("Salary Prediction App (Kaggle Survey 2022)")
     st.subheader(" Predict your salary based on skills, experience, and education")
 
-    # Define the education mapping (assuming numerical encoding is already correct)
-    education_levels = [0, 1, 2, 3, 4, 5] # Assuming these correspond to the numerical values
+    # Define the education mapping (VERIFY THIS AGAINST TRAINING DATA)
+    education_mapping = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5} # Assuming direct mapping
 
     # List of the 42 features the model expects
     feature_names = [
@@ -41,13 +41,12 @@ def main():
 
             st.sidebar.subheader("Input Features")
 
-            # Create input widgets based on the feature names
             codes_java = st.sidebar.checkbox("I code in Java", key="java")
             codes_python = st.sidebar.checkbox("I code in Python", key="python")
             codes_sql = st.sidebar.checkbox("I code in SQL", key="sql")
             codes_go = st.sidebar.checkbox("I code in GO", key="go")
             years_coding = st.sidebar.slider("Years of Coding Experience", 0, 30, 5, key="years")
-            education = st.sidebar.selectbox("Education Level", education_levels, key="education")
+            education_index = st.sidebar.selectbox("Education Level", list(education_mapping.keys()), key="education")
             country = st.sidebar.selectbox("Country", [
                 "Australia", "Bangladesh", "Brazil", "Canada", "Chile", "China", "Colombia", "Egypt",
                 "France", "Ghana", "India", "Indonesia", "Iran, Islamic Republic of...", "Israel",
@@ -57,16 +56,15 @@ def main():
                 "United Kingdom of Great Britain and Northern Ireland", "United States of America"
             ], key="country")
 
-            # Create the feature dictionary
+            # Create the feature dictionary in the correct order
             features = {}
             features["Codes_In_JAVA"] = int(codes_java)
             features["Codes_In_Python"] = int(codes_python)
             features["Codes_In_SQL"] = int(codes_sql)
             features["Codes_In_GO"] = int(codes_go)
             features["Years_Coding"] = years_coding
-            features["Education"] = education
+            features["Education"] = education_mapping[education_index] # Use the mapping
 
-            # Handle Country one-hot encoding
             for country_name in [
                 "Australia", "Bangladesh", "Brazil", "Canada", "Chile", "China", "Colombia", "Egypt",
                 "France", "Ghana", "India", "Indonesia", "Iran, Islamic Republic of...", "Israel",
@@ -77,8 +75,8 @@ def main():
             ]:
                 features[f"Country_{country_name}"] = 1 if country == country_name else 0
 
-            # Create the input DataFrame with the correct column order
-            input_data = pd.DataFrame([features])
+            # Create the input DataFrame with the specified column order
+            input_data = pd.DataFrame([features], columns=feature_names)
 
             if st.checkbox("Show input features"):
                 st.write("Input Data:")
