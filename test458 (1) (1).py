@@ -30,7 +30,7 @@ def main():
     # Load the trained regression model and potentially the scaler
     scaler = None
     try:
-    with open("models/Salary2022_model(1).pkl", "rb") as f:
+        with open("models/Salary2022_model(1).pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
             all_features_from_model = model_dict["columns"]
