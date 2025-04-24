@@ -2,17 +2,21 @@ import streamlit as st
 import pandas as pd
 import pickle
 import numpy as np
-from sklearn.preprocessing import StandardScaler  # Import StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 def main():
     st.title("📊 Salary Prediction App (Kaggle Survey 2022)")
     st.subheader("🔮 Predict your salary based on skills, experience, and education")
 
-    # Define a more common education mapping (you might need to adjust this)
-    education_mapping = {'HS': 0, 'BS': 1, 'MS': 2, 'PHD': 3, 'Associate': 1, 'Professional degree': 2, 'I never completed any formal education': 0, 'Primary/elementary school': 0, 'Some college/university study without earning a bachelor’s degree': 1, 'Secondary school (e.g. American high school, German Realschule or Gymnasium, etc.)': 0, 'Some doctoral-level study without earning a doctorate': 3}
+    education_mapping = {
+        'HS': 0, 'BS': 1, 'MS': 2, 'PHD': 3, 'Associate': 1, 'Professional degree': 2,
+        'I never completed any formal education': 0, 'Primary/elementary school': 0,
+        'Some college/university study without earning a bachelor’s degree': 1,
+        'Secondary school (e.g. American high school, German Realschule or Gymnasium, etc.)': 0,
+        'Some doctoral-level study without earning a doctorate': 3
+    }
     education_options = list(education_mapping.keys())
 
-    # List of the 42 features the model expects
     feature_names = [
         "Codes_In_JAVA", "Codes_In_Python", "Codes_In_SQL", "Codes_In_GO", "Years_Coding", "Education",
         "Country_Australia", "Country_Bangladesh", "Country_Brazil", "Country_Canada", "Country_Chile",
@@ -27,119 +31,86 @@ def main():
     ]
     expected_features = len(feature_names)
 
-    # Load the trained regression model and potentially the scaler
-    scaler = None
     try:
         with open("gradient_boosting_pipeline.pkl", "rb") as f:
             model_dict = pickle.load(f)
             model = model_dict["model"]
-            all_features_from_model = model_dict.get("columns") # Use .get() to handle potential absence
-            if 'scaler' in model_dict:
-                scaler = model_dict['scaler']
-            elif 'standard_scaler' in model_dict:
-                scaler = model_dict['standard_scaler']
+            all_features_from_model = model_dict.get("columns")
+            scaler = model_dict.get("scaler") or model_dict.get("standard_scaler")
 
-            st.sidebar.success("✅ Model loaded successfully!")
-            st.sidebar.write(f"🧠 Model type: {type(model).__name__}")
-            if all_features_from_model:
-                st.sidebar.write(f"✨ Available features in model file: {len(all_features_from_model)}")
-                st.sidebar.write(f"➡️ Using features for prediction: {expected_features}")
-                if len(all_features_from_model) > expected_features:
-                    st.sidebar.warning(f"⚠️ Not using extra features: {all_features_from_model[expected_features:]}")
+        st.sidebar.success("✅ Model loaded successfully!")
+        st.sidebar.write(f"🧠 Model type: {type(model).__name__}")
+        if all_features_from_model:
+            st.sidebar.write(f"✨ Features from model file: {len(all_features_from_model)}")
+            st.sidebar.write(f"➡️ Using {expected_features} features for prediction")
 
-                # Print the loaded feature names to the console (for debugging)
-                print("Features loaded from pickle file:", all_features_from_model)
-            else:
-                st.sidebar.warning("⚠️ Feature column names not found in the loaded model.")
+        st.sidebar.header("⚙️ Input Features")
+        codes_java = st.sidebar.checkbox("☕ I code in Java")
+        codes_python = st.sidebar.checkbox("🐍 I code in Python")
+        codes_sql = st.sidebar.checkbox("📊 I code in SQL")
+        codes_go = st.sidebar.checkbox("🐹 I code in GO")
+        years_coding = st.sidebar.slider("⏳ Years of Coding Experience", 0, 30, 5)
+        education_str = st.sidebar.selectbox("🎓 Education Level", education_options)
+        country = st.sidebar.selectbox("🌎 Country", [name.replace("Country_", "") for name in feature_names if name.startswith("Country_")])
 
-            st.sidebar.header("⚙️ Input Features")
+        features = {
+            "Codes_In_JAVA": int(codes_java),
+            "Codes_In_Python": int(codes_python),
+            "Codes_In_SQL": int(codes_sql),
+            "Codes_In_GO": int(codes_go),
+            "Years_Coding": years_coding,
+            "Education": education_mapping.get(education_str, 0)
+        }
 
-            codes_java = st.sidebar.checkbox("☕ I code in Java", key="java")
-            codes_python = st.sidebar.checkbox("🐍 I code in Python", key="python")
-            codes_sql = st.sidebar.checkbox("📊 I code in SQL", key="sql")
-            codes_go = st.sidebar.checkbox("🐹 I code in GO", key="go")
-            years_coding = st.sidebar.slider("⏳ Years of Coding Experience", 0, 30, 5, key="years")
-            education_str = st.sidebar.selectbox("🎓 Education Level", education_options, key="education")
-            country = st.sidebar.selectbox("🌎 Country", [
-                "Australia", "Bangladesh", "Brazil", "Canada", "Chile", "China", "Colombia", "Egypt",
-                "France", "Ghana", "India", "Indonesia", "Iran, Islamic Republic of...", "Israel",
-                "Italy", "Japan", "Kenya", "Mexico", "Morocco", "Netherlands", "Nigeria", "Other",
-                "Pakistan", "Peru", "Philippines", "Poland", "Russia", "South Africa", "South Korea",
-                "Spain", "Taiwan", "Thailand", "Tunisia", "Turkey",
-                "United Kingdom of Great Britain and Northern Ireland", "United States of America", "Viet Nam"
-            ], key="country")
+        for country_name in [name.replace("Country_", "") for name in feature_names if name.startswith("Country_")]:
+            features[f"Country_{country_name}"] = int(country == country_name)
 
-            # Create the feature dictionary
-            features = {}
-            features["Codes_In_JAVA"] = int(codes_java)
-            features["Codes_In_Python"] = int(codes_python)
-            features["Codes_In_SQL"] = int(codes_sql)
-            features["Codes_In_GO"] = int(codes_go)
-            features["Years_Coding"] = years_coding
-            features["Education"] = education_mapping.get(education_str, 0) # Use .get() with a default
+        input_data = pd.DataFrame([features], columns=feature_names)
 
-            for country_name in [
-                "Australia", "Bangladesh", "Brazil", "Canada", "Chile", "China", "Colombia", "Egypt",
-                "France", "Ghana", "India", "Indonesia", "Iran, Islamic Republic of...", "Israel",
-                "Italy", "Japan", "Kenya", "Mexico", "Morocco", "Netherlands", "Nigeria", "Other",
-                "Pakistan", "Peru", "Philippines", "Poland", "Russia", "South Africa", "South Korea",
-                "Spain", "Taiwan", "Thailand", "Tunisia", "Turkey",
-                "United Kingdom of Great Britain and Northern Ireland", "United States of America", "Viet Nam"
-            ]:
-                features[f"Country_{country_name}"] = 1 if country == country_name else 0
+        if st.checkbox("🔍 Show input features"):
+            st.write("Data:")
+            st.write(input_data)
 
-            # Create the input DataFrame with the correct column order
-            input_data = pd.DataFrame([features], columns=feature_names)
+        if st.button("💰 Predict Salary"):
+            try:
+                if all_features_from_model is None:
+                    st.error("🚨 Feature columns not found in model.")
+                elif set(input_data.columns) != set(all_features_from_model):
+                    st.error("🚨 Mismatch in feature columns.")
+                    st.text(f"Difference:\n{set(all_features_from_model) ^ set(input_data.columns)}")
+                else:
+                    # Align input to model's expected column order
+                    input_data = input_data[all_features_from_model]
 
-            if st.checkbox("🔍 Show input features"):
-                st.write("Data:")
-                st.write(input_data)
-                st.info(f"Total features in input: {input_data.shape[1]}")
+                    if scaler:
+                        scaled_array = scaler.transform(input_data)
+                        input_data = pd.DataFrame(scaled_array, columns=all_features_from_model)
 
-            if st.button("💰 Predict Salary"):
-                try:
-                    if input_data.shape[1] != expected_features:
-                        st.error(f"🚨 Error: Expected {expected_features} features, got {input_data.shape[1]}.")
+                    prediction = model.predict(input_data)
+                    st.success(f"🎉 Estimated Annual Salary: ${prediction[0]:,.2f}")
+
+                    if prediction[0] < 40000:
+                        st.info("💼 Likely entry-level.")
+                    elif prediction[0] < 80000:
+                        st.info("🧑‍💻 Likely mid-level.")
+                    elif prediction[0] < 120000:
+                        st.info("👨‍💼 Likely senior-level.")
                     else:
-                        # Scale all features using the loaded scaler
-                        if scaler is not None and all_features_from_model is not None:
-                            input_data_scaled = scaler.transform(input_data)
-                            input_data = pd.DataFrame(input_data_scaled, columns=all_features_from_model)
-                        elif scaler is None:
-                            st.warning("⚠️ Scaler not found in the loaded model. Predictions might be less accurate.")
-                        elif all_features_from_model is None:
-                            st.warning("⚠️ Feature column names not found in the loaded model. Predictions might be less accurate.")
+                        st.info("🚀 Likely expert/leadership.")
 
-                        prediction = model.predict(input_data)
-                        st.success(f"🎉 Estimated Annual Salary: ${prediction[0]:,.2f}")
+            except Exception as e:
+                st.error(f"🛑 Error during prediction: {e}")
+                st.text("Model input info:")
+                st.text(f"Expected shape: {model.n_features_in_ if hasattr(model, 'n_features_in_') else 'Unknown'}")
+                st.text(f"Input shape: {input_data.shape}")
 
-                        if prediction[0] < 40000:
-                            st.info("💼 Likely entry-level.")
-                        elif prediction[0] < 80000:
-                            st.info("🧑‍💻 Likely mid-level.")
-                        elif prediction[0] < 120000:
-                            st.info("👨‍💼 Likely senior-level.")
-                        else:
-                            st.info("🚀 Likely expert/leadership.")
-
-                except Exception as e:
-                    st.error(f"🛑 Error during prediction: {e}")
-                    st.write("Input data shape:", input_data.shape)
-                    if hasattr(model, 'n_features_in_'):
-                        st.write("Model expected features:", model.n_features_in_)
-                    st.info("⚠️ Check error and ensure input matches model expectations.")
     except FileNotFoundError:
-        st.error("File not found: 'Salary2022_model(1).pkl' 📂")
-        return
+        st.error("File not found: 'gradient_boosting_pipeline.pkl' 📂")
     except Exception as e:
         st.error(f"Error loading model: {e} 🤕")
-        return
 
     st.markdown("---")
-    st.markdown(
-        "<small>✨ Built with ❤️ using Streamlit — Jiya, Rhea, and Michael",
-        unsafe_allow_html=True
-    )
+    st.markdown("<small>✨ Built with ❤️ using Streamlit — Jiya, Rhea, and Michael", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
