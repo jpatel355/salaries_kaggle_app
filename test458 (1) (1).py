@@ -6,7 +6,7 @@ def main():
     # Load the trained model first to ensure it's ready
     try:
         # Directly load the model saved using pickle
-        with open("salary2022_model.pkl", "rb") as f:
+        with open("salary2022_model (2).pkl", "rb") as f:
             model = pickle.load(f)
 
         st.sidebar.success("✅ Model loaded successfully!")
