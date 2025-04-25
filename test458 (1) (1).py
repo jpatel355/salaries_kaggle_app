@@ -66,3 +66,81 @@ def main():
             codes_python (bool): Whether the user codes in Python.
             codes_sql (bool): Whether the user codes in SQL.
             codes_go (bool): Whether the user codes in Go.
+            expected_features (list): List of feature names the model expects.
+
+        Returns:
+            pd.DataFrame: Prepared input DataFrame.
+        """
+
+        features = {feature: 0 for feature in expected_features}
+
+        # Assign basic features
+        features["Education"] = education_mapping[education]
+        features["Years_Coding"] = years_coding
+        features["Codes_In_JAVA"] = int(codes_java)
+        features["Codes_In_Python"] = int(codes_python)
+        features["Codes_In_SQL"] = int(codes_sql)
+        features["Codes_In_GO"] = int(codes_go)
+
+        # One-hot encode country
+        country_column = f"Country_{country}"
+        if country_column in features:
+            features[country_column] = 1
+        elif "Country_Other" in features:
+            if country not in [c.split("_")[1] for c in expected_features if c.startswith("Country_")]:
+                features["Country_Other"] = 1
+            else:
+                st.warning(f"Warning: Country '{country}' was in training data but not explicitly handled. Using 'Other'")
+                features["Country_Other"] = 1
+        else:
+            st.warning(f"Warning: Country '{country}' not found and 'Country_Other' not in training data. Prediction may be unreliable.")
+
+        input_df = pd.DataFrame([features], columns=expected_features)
+        return input_df
+
+    # --- 5. Prepare Input DataFrame ---
+    input_df = prepare_input_data(education, years_coding, country, codes_java, codes_python, codes_sql, codes_go, expected_feature_names)
+
+    # --- 6. Debugging (Show Input Data) ---
+    if st.checkbox("Show Input Data for Debugging"):
+        st.subheader("Input Data for Prediction")
+        st.dataframe(input_df)
+        st.text(f"Input Data Shape: {input_df.shape}")
+        st.text(f"Input Data Columns: {input_df.columns.tolist()}")
+        st.text(f"Expected Features: {expected_feature_names}")
+
+        # --- 6b. Even More Robust Debugging: Column Comparison ---
+        def find_column_differences(list1, list2):
+            set1 = set(list1)
+            set2 = set(list2)
+            in_list1_only = list(set1 - set2)
+            in_list2_only = list(set2 - set1)
+            return in_list1_only, in_list2_only
+
+        training_cols = expected_feature_names  # Assuming expected_feature_names is from training
+        input_cols = input_df.columns.tolist()
+
+        missing_in_input, missing_in_training = find_column_differences(training_cols, input_cols)
+
+        if missing_in_input:
+            st.error(f"ERROR: Columns missing in input data: {missing_in_input}")
+        if missing_in_training:
+            st.error(f"ERROR: Columns missing in training data (this should not happen!): {missing_in_training}")
+
+    # --- 7. Make Prediction ---
+    if st.button("💰 Predict Salary"):
+        try:
+            if input_df.shape[1] != num_expected_features:
+                st.error(f"ERROR: Input data has {input_df.shape[1]} features, but the model expects {num_expected_features}. Please check input values and model file.")
+            else:
+                prediction = model.predict(input_df)[0]
+                st.success(f"🎉 Estimated Annual Salary: ${prediction:,.2f}")
+        except Exception as e:
+            st.error(f"ERROR: An unexpected error occurred during prediction: {e}")
+
+    # --- 8. Footer ---
+    st.markdown("---")
+    st.markdown("<small>✨ Developed with ❤️ using Streamlit</small>", unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
