@@ -20,19 +20,24 @@ education = st.selectbox("Education Level", list(education_mapping.keys()))
 years_coding = st.slider("Years of Coding Experience", 0, 40, 5)
 country = st.selectbox("Country", ["India", "Nigeria", "Other", "United States of America", "Brazil"])
 
+
+
 # Map the selected education level to its numeric value
 education_num = education_mapping[education]
 
+
+
 # Build the feature dictionary for prediction
 input_data = pd.DataFrame({
-        'YearsCoding': [years_coding],
-        'Education': [education_num],
-        'Country_Brazil': [1 if country == 'Brazil' else 0],
-        'Country_India': [1 if country == 'India' else 0],
-        'Country_Nigeria': [1 if country == 'Nigeria' else 0],
-        'Country_Other': [1 if country == 'Other' else 0],
-        'Country_United States of America': [1 if country == 'United States of America' else 0],
-    })
+    'YearsCoding': [years_coding],
+    'Education': [education_num],
+    'Country_Brazil': [1 if country == 'Brazil' else 0],
+    'Country_India': [1 if country == 'India' else 0],
+    'Country_Nigeria': [1 if country == 'Nigeria' else 0],
+    'Country_Other': [1 if country == 'Other' else 0],
+    'Country_United States of America': [1 if country == 'United States of America' else 0],
+})
+
 
 
 # Section header
