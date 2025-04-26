@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 # 📢 Fix here: Load model without /content
-model, feature_columns = joblib.load('salary_model.pkl')
+model, feature_columns = joblib.load('salary_model (2).pkl')
 
 # App title
 st.title("💼 Salary Predictor 2025")
