@@ -47,4 +47,4 @@ if st.button("💵 Predict Salary"):
         st.success(f"💰 Estimated Salary: ${prediction:,.2f}")
     except Exception as e:
         st.error(f"An error occurred during prediction: {e}")
-        st.error("Please check your input data and model compatibility
+        st.error("Please check your input data and model compatibility.")
