@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # Load the trained model
-with open('gradient_boosting_model_with_experience.pkl', 'rb') as f:
+with open('salary_prediction_model_with_languages.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Set page title
@@ -51,7 +51,7 @@ country = st.selectbox(
     ]
 )
 
-# Machine Learning Experience input
+# ML Experience input
 experience_years = st.selectbox(
     'For how many years have you used machine learning methods?',
     [
@@ -81,13 +81,48 @@ experience_mapping = {
 }
 experience_mapped = experience_mapping[experience_years]
 
+# Programming Languages input (multiselect)
+programming_languages = st.multiselect(
+    'Which programming languages do you know?',
+    [
+        'Python',
+        'SQL',
+        'R',
+        'C++',
+        'Java',
+        'Julia',
+        'Javascript',
+        'Other'
+    ]
+)
+
+# Map selected languages into features
+knows_python = 1 if 'Python' in programming_languages else 0
+knows_sql = 1 if 'SQL' in programming_languages else 0
+knows_r = 1 if 'R' in programming_languages else 0
+
+# Job Title input
+job_title = st.selectbox(
+    'What best describes your current job title?',
+    [
+        'Data Scientist',
+        'Engineer',
+        'Analyst',
+        'Other'
+    ]
+)
+
 # Predict button
 if st.button('Predict Salary'):
     # Create input array for model
     input_data = {
         'Education_Mapped': [education_mapped],
         'Country_Mapped': [country],
-        'Experience_Mapped': [experience_mapped]
+        'Experience_Mapped': [experience_mapped],
+        'Knows_Python': [knows_python],
+        'Knows_SQL': [knows_sql],
+        'Knows_R': [knows_r],
+        'Job_Title_Simplified': [job_title]
     }
    
     input_df = pd.DataFrame(input_data)
