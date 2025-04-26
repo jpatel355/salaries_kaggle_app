@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load your saved model and feature columns
-model, feature_columns = joblib.load('salary_model (2).pkl')
+# 📢 Fix here: Load model without /content
+model, feature_columns = joblib.load('salary_model.pkl')
 
 # App title
 st.title("💼 Salary Predictor 2025")
