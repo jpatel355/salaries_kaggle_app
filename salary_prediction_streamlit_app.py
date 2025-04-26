@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # Load the trained model
-with open('salary_prediction_model_with_experience.pkl', 'rb') as f:
+with open('gradient_boosting_model_with_experience.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Set page title
