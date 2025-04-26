@@ -1,70 +1,55 @@
 import streamlit as st
-import pickle
 import pandas as pd
+import joblib
 
-# Load the trained regression model
-with open("kaggle_edu_model_2022.pkl", "rb") as f:
-    model = pickle.load(f)
-
-# Define the education mapping (example: adapt if different in your model)
-education_mapping = {'HS': 0, 'BS': 1, 'MS': 2, 'PHD': 3}
+# Load your saved model and feature columns
+model, feature_columns = joblib.load('salary_model (2).pkl')
 
 # App title
-st.title("🎓 Education Salary Predictor 2025")
-st.subheader("📈 Estimate your salary based on education, coding skills, and experience")
+st.title("💼 Salary Predictor 2025")
+st.subheader("📈 Predict your salary based on skills, experience, and country")
 
-# User input widgets
-education = st.selectbox("Education Level", list(education_mapping.keys()))
-years_coding = st.slider("Years of Coding Experience", 0, 40, 5)
-country = st.selectbox("Country", ["India", "US", "Canada", "Spain", "Other"])
-codes_java = st.checkbox("Codes in JAVA")
-codes_python = st.checkbox("Codes in Python")
-codes_sql = st.checkbox("Codes in SQL")
-codes_go = st.checkbox("Codes in GO")
+# Sidebar for user inputs
+st.sidebar.header("User Input:")
 
-# Map the selected education level to its numeric value
-education_num = education_mapping[education]
+# User inputs
+years_coding = st.sidebar.slider("Years of Coding Experience", 0, 40, 5)
 
-# Build the feature dictionary for prediction
-features = {
-    "Education": education_num,
-    "Years_Coding": years_coding,
-    "Codes_In_JAVA": int(codes_java),
-    "Codes_In_Python": int(codes_python),
-    "Codes_In_SQL": int(codes_sql),
-    "Codes_In_GO": int(codes_go),
-    "Country_India": 0,
-    "Country_Other": 0,
-    "Country_Spain": 0,
-    "Country_US": 0,
+codes_in_python = st.sidebar.checkbox("Do you code in Python?")
+codes_in_sql = st.sidebar.checkbox("Do you code in SQL?")
+codes_in_java = st.sidebar.checkbox("Do you code in Java?")
+codes_in_go = st.sidebar.checkbox("Do you code in Go?")
+
+# Important: country must match how the model was trained
+country = st.sidebar.selectbox("Select your Country:", [
+    "Country_Nonbinary", 
+    "Country_Prefer not to say", 
+    "Country_Woman"
+])
+
+# Build feature input
+input_dict = {
+    'Years_Coding': years_coding,
+    'Codes_In_Python': int(codes_in_python),
+    'Codes_In_SQL': int(codes_in_sql),
+    'Codes_In_JAVA': int(codes_in_java),
+    'Codes_In_GO': int(codes_in_go),
+    'Country_Nonbinary': 0,
+    'Country_Prefer not to say': 0,
+    'Country_Woman': 0
 }
 
-# Set country dummy variables
-if country != "Canada":
-    if country == "India":
-        features["Country_India"] = 1
-    elif country == "US":
-        features["Country_US"] = 1
-    elif country == "Spain":
-        features["Country_Spain"] = 1
-    elif country == "Other":
-        features["Country_Other"] = 1
+# Set correct country dummy
+if country in input_dict:
+    input_dict[country] = 1
 
-# Create DataFrame
-input_data = pd.DataFrame([features])
+# Convert to DataFrame
+input_df = pd.DataFrame([input_dict])
 
-# Section header
-st.markdown("### 📊 Salary Prediction")
+# Reindex to match training features
+input_df = input_df.reindex(columns=feature_columns, fill_value=0)
 
 # Predict button
-st.write("Click below to estimate your salary:")
 if st.button("💵 Predict Salary"):
-    prediction = model.predict(input_data)[0]
-    st.success(f"💰 Estimated Salary: **${prediction:,.2f}**")
-
-# Footer
-st.markdown("---")
-st.markdown(
-    "<small>📘 Built with ❤️ using Streamlit — 2025 Edition</small>",
-    unsafe_allow_html=True
-)
+    salary_pred = model.predict(input_df)[0]
+    st.success(f"💰 Estimated Salary: **${salary_pred:,.2f}**")
