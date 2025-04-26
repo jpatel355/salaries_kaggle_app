@@ -2,7 +2,7 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-with open('salary_prediction_model (1).pkl', 'rb') as f:
+with open('salary_prediction_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Set page title
