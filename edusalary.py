@@ -12,18 +12,21 @@ def predict_salary(features):
     return prediction[0]
 
 def main():
-    st.title("Salary Prediction App")
+    st.title("Educational Salary Prediction App 🎓💰")
+    st.write("Fill in your details below to predict your expected salary:")
 
-    st.write("Provide the following inputs:")
-
-    years_experience = st.number_input("Years of Experience", min_value=0.0, step=0.1)
-    education_level = st.selectbox("Education Level", [1, 2, 3], format_func=lambda x: {1:"Bachelor", 2:"Master", 3:"PhD"}[x])
-    age = st.number_input("Age", min_value=0, step=1)
+    years_experience = st.number_input("Years of Experience", min_value=0.0, max_value=50.0, step=0.5)
+    education_level = st.selectbox(
+        "Highest Education Level Achieved",
+        options=[1, 2, 3],
+        format_func=lambda x: {1: "Bachelor's", 2: "Master's", 3: "PhD"}[x]
+    )
+    age = st.number_input("Age", min_value=18, max_value=80, step=1)
 
     if st.button("Predict Salary"):
         features = [years_experience, education_level, age]
         salary = predict_salary(features)
-        st.success(f"Predicted Salary: ${salary:,.2f}")
+        st.success(f"🎯 Predicted Salary: ${salary:,.2f}")
 
 if __name__ == "__main__":
     main()
