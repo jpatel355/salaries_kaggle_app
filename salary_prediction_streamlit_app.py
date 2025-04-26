@@ -6,15 +6,24 @@ import pandas as pd
 with open('gb_salary_prediction_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Set page title
-st.title("Data Science Salary Prediction App")
+# Fancy Title
+st.markdown(
+    "<h1 style='text-align: center; color: #4CAF50;'>🚀 Data Science Salary Predictor 🎯</h1>",
+    unsafe_allow_html=True
+)
+st.markdown(
+    "<h3 style='text-align: center; color: #9E9E9E;'>Discover your earning potential based on your skills! 🧠💼</h3>",
+    unsafe_allow_html=True
+)
 
-# Create the user input form
-st.header("Enter Your Information:")
+st.write("")  # Space
+
+# Form Section
+st.header("📋 Please Enter Your Information:")
 
 # Education input
 education_level = st.selectbox(
-    'What is your highest level of education?',
+    '🎓 Highest Level of Education:',
     [
         "No formal education past high school",
         "Some college/university study without earning a bachelor’s degree",
@@ -26,7 +35,6 @@ education_level = st.selectbox(
     ]
 )
 
-# Map education input to numbers
 education_mapping = {
     "No formal education past high school": 0,
     "Some college/university study without earning a bachelor’s degree": 1,
@@ -40,7 +48,7 @@ education_mapped = education_mapping[education_level]
 
 # Country input
 country = st.selectbox(
-    'Which country are you from?',
+    '🌎 Your Country:',
     [
         'United States of America',
         'India',
@@ -53,7 +61,7 @@ country = st.selectbox(
 
 # ML Experience input
 experience_years = st.selectbox(
-    'For how many years have you used machine learning methods?',
+    '🧠 Years of Machine Learning Experience:',
     [
         'I do not use machine learning methods',
         'Under 1 year',
@@ -67,7 +75,6 @@ experience_years = st.selectbox(
     ]
 )
 
-# Map experience input to numbers
 experience_mapping = {
     'I do not use machine learning methods': 0,
     'Under 1 year': 0.5,
@@ -83,7 +90,7 @@ experience_mapped = experience_mapping[experience_years]
 
 # Programming Languages input (multiselect)
 programming_languages = st.multiselect(
-    'Which programming languages do you know?',
+    '💻 Which Programming Languages Do You Know?',
     [
         'Python',
         'SQL',
@@ -103,7 +110,7 @@ knows_r = 1 if 'R' in programming_languages else 0
 
 # Job Title input
 job_title = st.selectbox(
-    'What best describes your current job title?',
+    '💼 What Best Describes Your Current Job Title?',
     [
         'Data Scientist',
         'Engineer',
@@ -113,22 +120,31 @@ job_title = st.selectbox(
 )
 
 # Predict button
-if st.button('Predict Salary'):
-    # Create input array for model
-    input_data = {
-        'Education_Mapped': [education_mapped],
-        'Country_Mapped': [country],
-        'Experience_Mapped': [experience_mapped],
-        'Knows_Python': [knows_python],
-        'Knows_SQL': [knows_sql],
-        'Knows_R': [knows_r],
-        'Job_Title_Simplified': [job_title]
-    }
-   
-    input_df = pd.DataFrame(input_data)
+if st.button('🎯 Predict My Salary!'):
+    # Show a spinner while calculating
+    with st.spinner('🔎 Calculating your estimated salary...'):
+        # Create input array for model
+        input_data = {
+            'Education_Mapped': [education_mapped],
+            'Country_Mapped': [country],
+            'Experience_Mapped': [experience_mapped],
+            'Knows_Python': [knows_python],
+            'Knows_SQL': [knows_sql],
+            'Knows_R': [knows_r],
+            'Job_Title_Simplified': [job_title]
+        }
+       
+        input_df = pd.DataFrame(input_data)
 
-    # Make prediction
-    predicted_salary = model.predict(input_df)[0]
+        # Make prediction
+        predicted_salary = model.predict(input_df)[0]
 
-    # Display result
-    st.success(f"Estimated Salary: ${int(predicted_salary):,}")
+        # Display result
+        st.success(f"💵 **Your Estimated Salary is:** ${int(predicted_salary):,}")
+
+# Footer
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown(
+    "<p style='text-align: center; color: #AAAAAA;'>Built with ❤️ using Streamlit</p>",
+    unsafe_allow_html=True
+)
