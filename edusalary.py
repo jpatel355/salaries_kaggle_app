@@ -1,11 +1,11 @@
-# edusalary_streamlit.py
+# edusalary.py
 
 import streamlit as st
-import joblib  # <-- NEW: using joblib
+import joblib
 import numpy as np
 
 # Load the model
-model = joblib.load('kaggle_edu_model_2025_reexported.joblib')
+model = joblib.load('kaggle_edu_model_streamlit_ready.joblib')  # <-- updated to the new filename!
 
 def predict_salary(features):
     features = np.array(features).reshape(1, -1)
