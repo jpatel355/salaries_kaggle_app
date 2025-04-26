@@ -1,46 +1,37 @@
 import streamlit as st
 import pandas as pd
-import joblib
+import pickle
 
-# Load your model + the list of feature columns
-model, feature_columns = joblib.load('salary_model (2).pkl')
+@st.cache(allow_output_mutation=True)
+def load_model():
+    with open('model.pkl', 'rb') as f:
+        return pickle.load(f)
 
-st.title("💼 Salary Predictor 2025")
-st.subheader("📈 Predict your salary based on skills, experience, and country")
+model = load_model()
 
-st.sidebar.header("User Input:")
+st.title("📊 Kaggle Survey: Job Role Predictor")
+st.write("Select your country and industry to see the model’s predicted job role.")
 
-# 1. Slider & checkboxes as before
-years_coding    = st.sidebar.slider("Years of Coding Experience", 0, 40, 5)
-codes_in_python = st.sidebar.checkbox("Do you code in Python?")
-codes_in_sql    = st.sidebar.checkbox("Do you code in SQL?")
-codes_in_java   = st.sidebar.checkbox("Do you code in Java?")
-codes_in_go     = st.sidebar.checkbox("Do you code in Go?")
+# You can either hard-code these lists or (better) load them dynamically:
+COUNTRIES = [
+    "United States", "India", "United Kingdom", "Germany",
+    "Canada", "Brazil", "France", "Other"
+]
+INDUSTRIES = [
+    "Online Service/Internet-based Services", "Insurance/Risk Assessment",
+    "Government/Public Service", "Manufacturing/Fabrication",
+    "Computers/Technology", "Accounting/Finance", "Academics/Education",
+    "Non-profit/Service", "Other"
+]
 
-# 2. Dynamically extract all "Country_*" columns
-country_cols   = [c for c in feature_columns if c.startswith("Country_")]
-country_labels = [c.replace("Country_", "") for c in country_cols]
+country  = st.selectbox("Country of Residence", COUNTRIES)
+industry = st.selectbox("Industry", INDUSTRIES)
 
-# 3. Let user pick one of those real labels
-country = st.sidebar.selectbox("Select your Country:", country_labels)
+input_df = pd.DataFrame([{ 'Q4': country, 'Q24': industry }])
 
-# 4. Build your input dict, zero-fill all country dummies
-input_dict = {
-    'Years_Coding':   years_coding,
-    'Codes_In_Python': int(codes_in_python),
-    'Codes_In_SQL':    int(codes_in_sql),
-    'Codes_In_JAVA':   int(codes_in_java),
-    'Codes_In_GO':     int(codes_in_go),
-}
-for col in country_cols:
-    input_dict[col] = 0
+st.subheader("Inputs")
+st.write(input_df.rename(columns={'Q4':'Country','Q24':'Industry'}))
 
-# 5. Turn on exactly the chosen country dummy
-input_dict[f"Country_{country}"] = 1
-
-# 6. DataFrame → reindex → predict
-input_df = pd.DataFrame([input_dict]).reindex(columns=feature_columns, fill_value=0)
-
-if st.button("💵 Predict Salary"):
-    salary_pred = model.predict(input_df)[0]
-    st.success(f"💰 Estimated Salary: **${salary_pred:,.2f}**")
+if st.button("Predict Job Role"):
+    pred = model.predict(input_df)[0]
+    st.success(f"🧑‍💼 Predicted Job Role: **{pred}**")
