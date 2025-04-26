@@ -1,10 +1,11 @@
+# edusalary_streamlit.py
+
 import streamlit as st
-import pickle
+import joblib  # <-- NEW: using joblib
 import numpy as np
 
 # Load the model
-with open('kaggle_edu_model_2025 (1).pkl', 'rb') as file:
-    model = pickle.load(file)
+model = joblib.load('kaggle_edu_model_2025_reexported.joblib')
 
 def predict_salary(features):
     features = np.array(features).reshape(1, -1)
