@@ -2,7 +2,8 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-with open('salary_prediction_model.pkl', 'rb') as f:
+# Load the trained model
+with open('salary_prediction_model_with_experience.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Set page title
@@ -21,11 +22,11 @@ education_level = st.selectbox(
         "Master’s degree",
         "Doctoral degree",
         "Professional doctorate",
-        "Prefer not to answer"
+        "I prefer not to answer"
     ]
 )
 
-# Map the education input to numbers (MUST match model)
+# Map education input to numbers
 education_mapping = {
     "No formal education past high school": 0,
     "Some college/university study without earning a bachelor’s degree": 1,
@@ -33,7 +34,7 @@ education_mapping = {
     "Master’s degree": 3,
     "Doctoral degree": 4,
     "Professional doctorate": 5,
-    "Prefer not to answer": -1
+    "I prefer not to answer": -1
 }
 education_mapped = education_mapping[education_level]
 
@@ -66,7 +67,7 @@ experience_years = st.selectbox(
     ]
 )
 
-# Map the experience input to numbers
+# Map experience input to numbers
 experience_mapping = {
     'I do not use machine learning methods': 0,
     'Under 1 year': 0.5,
@@ -95,4 +96,4 @@ if st.button('Predict Salary'):
     predicted_salary = model.predict(input_df)[0]
 
     # Display result
-    st.success(f"Estimated Salary: ${int(predicted_salary):,}") 
+    st.success(f"Estimated Salary: ${int(predicted_salary):,}")
