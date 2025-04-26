@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # Load the trained model
-with open('gb_salary_prediction_model.pkl', 'rb') as f:
+with open('gb_salary_prediction_model (1).pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Fancy Title
