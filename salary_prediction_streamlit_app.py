@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # Load the trained model
-with open('salary_prediction_model_with_languages.pkl', 'rb') as f:
+with open('gb_salary_prediction_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Set page title
