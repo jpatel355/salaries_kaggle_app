@@ -42,5 +42,9 @@ st.markdown("### 📊 Salary Prediction")
 st.write("Click the button below to estimate your salary.")
 
 if st.button("💵 Predict Salary"):
-    prediction = model.predict(input_data)[0]  # Get the scalar value
-    st.success(f"💰 Estimated Salary: ${prediction:,.2f}")
+    try:
+        prediction = model.predict(input_data)[0]  # Get the scalar value
+        st.success(f"💰 Estimated Salary: ${prediction:,.2f}")
+    except Exception as e:
+        st.error(f"An error occurred during prediction: {e}")
+        st.error("Please check your input data and model compatibility
