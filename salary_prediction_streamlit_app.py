@@ -145,6 +145,6 @@ if st.button('🎯 Predict My Salary!'):
 # Footer
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align: center; color: #AAAAAA;'>Built with ❤️ using Streamlit</p>",
+    "<p style='text-align: center; color: #AAAAAA;'>Built with lots of ❤️ by Jiya, Rhea, and Michael</p>",
     unsafe_allow_html=True
 )
