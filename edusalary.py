@@ -1,37 +1,46 @@
 import streamlit as st
-import pandas as pd
 import pickle
+import pandas as pd
 
-@st.cache(allow_output_mutation=True)
-def load_model():
-    with open('model.pkl', 'rb') as f:
-        return pickle.load(f)
+# Load the trained regression model
+# Adjust the path to where you saved your pickle file.  Use a raw string.
+model_path = 'best_salary_prediction_model.pkl'  # Or the path you used
+with open(model_path, "rb") as f:
+    model = pickle.load(f)
 
-model = load_model()
+# Define the education mapping (consistent with your training)
+education_mapping = {'HS': 0, 'BS': 1, 'MS': 2, 'PhD': 3, 'NR': -1}  # Added 'NR'
 
-st.title("📊 Kaggle Survey: Job Role Predictor")
-st.write("Select your country and industry to see the model’s predicted job role.")
+# App title
+st.title("💼 Salary Predictor")
+st.subheader("💰 Predict salary based on your data")
 
-# You can either hard-code these lists or (better) load them dynamically:
-COUNTRIES = [
-    "United States", "India", "United Kingdom", "Germany",
-    "Canada", "Brazil", "France", "Other"
-]
-INDUSTRIES = [
-    "Online Service/Internet-based Services", "Insurance/Risk Assessment",
-    "Government/Public Service", "Manufacturing/Fabrication",
-    "Computers/Technology", "Accounting/Finance", "Academics/Education",
-    "Non-profit/Service", "Other"
-]
+# User input widgets
+education = st.selectbox("Education Level", list(education_mapping.keys()))
+years_coding = st.slider("Years of Coding Experience", 0, 40, 5)
+country = st.selectbox("Country", ["India", "Nigeria", "Other", "United States of America", "Brazil"])
 
-country  = st.selectbox("Country of Residence", COUNTRIES)
-industry = st.selectbox("Industry", INDUSTRIES)
+# Map the selected education level to its numeric value
+education_num = education_mapping[education]
 
-input_df = pd.DataFrame([{ 'Q4': country, 'Q24': industry }])
+# Build the feature dictionary for prediction
+input_data = pd.DataFrame({
+        'YearsCoding': [years_coding],
+        'Education': [education_num],
+        'Country_Brazil': [1 if country == 'Brazil' else 0],
+        'Country_India': [1 if country == 'India' else 0],
+        'Country_Nigeria': [1 if country == 'Nigeria' else 0],
+        'Country_Other': [1 if country == 'Other' else 0],
+        'Country_United States of America': [1 if country == 'United States of America' else 0],
+    })
 
-st.subheader("Inputs")
-st.write(input_df.rename(columns={'Q4':'Country','Q24':'Industry'}))
 
-if st.button("Predict Job Role"):
-    pred = model.predict(input_df)[0]
-    st.success(f"🧑‍💼 Predicted Job Role: **{pred}**")
+# Section header
+st.markdown("### 📊 Salary Prediction")
+
+# Instructions + Predict button
+st.write("Click the button below to estimate your salary.")
+
+if st.button("💵 Predict Salary"):
+    prediction = model.predict(input_data)[0]  # Get the scalar value
+    st.success(f"💰 Estimated Salary: ${prediction:,.2f}")
