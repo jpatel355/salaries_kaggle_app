@@ -1,20 +1,21 @@
-import streamlit as st
-import pickle
-import numpy as np
+import streamlit as st 🎈
+import pickle 💾
+import numpy as np 🔢
+import pandas as pd 🐼
 
 # Load the trained model
 with open('salary_prediction_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Set page title
-st.title("Data Science Salary Prediction App")
+st.title("💰 Data Science Salary Prediction App 📊")
 
 # Create the user input form
-st.header("Enter Your Information:")
+st.header("✍️ Enter Your Information:")
 
 # Education input
 education_level = st.selectbox(
-    'What is your highest level of education?',
+    '🎓 What is your highest level of education?',
     [
         "No formal education past high school",
         "Some college/university study without earning a bachelor’s degree",
@@ -40,7 +41,7 @@ education_mapped = education_mapping[education_level]
 
 # Country input
 country = st.selectbox(
-    'Which country are you from?',
+    '🌎 Which country are you from?',
     [
         'United States of America',
         'India',
@@ -52,18 +53,17 @@ country = st.selectbox(
 )
 
 # Predict button
-if st.button('Predict Salary'):
+if st.button('🔮 Predict Salary'):
     # Create input array for model
     input_data = {
         'Education_Mapped': [education_mapped],
         'Country_Mapped': [country]
     }
-   
-    import pandas as pd
+
     input_df = pd.DataFrame(input_data)
 
     # Make prediction
     predicted_salary = model.predict(input_df)[0]
 
     # Display result
-    st.success(f"Estimated Salary: ${int(predicted_salary):,}")
+    st.success(f"🎉 Estimated Salary: ${int(predicted_salary):,}")
